@@ -1,53 +1,438 @@
-import { useState } from "react";
-import { useListSites, useGetSiteStats, SiteStatus } from "@workspace/api-client-react";
+import { useState, useEffect, useRef, useCallback } from "react";
+import { useSitesStore, Site, SiteStatus, SitePlatform, SiteDeployment } from "@/store/useSitesStore";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Search, Plus, ExternalLink, MoreVertical, Globe, Settings, Activity, PauseCircle } from "lucide-react";
+import {
+  Search, Plus, ExternalLink, Globe, Activity, Settings,
+  PauseCircle, ChevronDown, ChevronUp, X, Rocket, Code2,
+  Eye, TrendingUp, Percent, Clock, CheckCircle2, XCircle, Loader2,
+  Filter, LayoutGrid, List, Zap, Tag
+} from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuSeparator,
+  DropdownMenuLabel,
 } from "@/components/ui/dropdown-menu";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { PermissionGuard } from "@/components/PermissionGuard";
 
+const PLATFORMS: (SitePlatform | "all")[] = ["all", "Lovable", "Replit", "WordPress", "Webflow", "Next.js", "Shopify", "Custom"];
+const STATUSES: { value: SiteStatus | "all"; label: string }[] = [
+  { value: "all", label: "Todos" },
+  { value: "active", label: "Ativo" },
+  { value: "development", label: "Dev" },
+  { value: "maintenance", label: "Manutenção" },
+  { value: "paused", label: "Pausado" },
+];
+
+function useCountUp(target: number, duration = 1200) {
+  const [count, setCount] = useState(0);
+  const raf = useRef<number | null>(null);
+
+  useEffect(() => {
+    if (target === 0) { setCount(0); return; }
+    const start = performance.now();
+    const animate = (now: number) => {
+      const elapsed = now - start;
+      const progress = Math.min(elapsed / duration, 1);
+      const eased = 1 - Math.pow(1 - progress, 3);
+      setCount(Math.floor(eased * target));
+      if (progress < 1) raf.current = requestAnimationFrame(animate);
+    };
+    raf.current = requestAnimationFrame(animate);
+    return () => { if (raf.current) cancelAnimationFrame(raf.current); };
+  }, [target, duration]);
+
+  return count;
+}
+
+function useDebounce<T>(value: T, delay = 300): T {
+  const [debounced, setDebounced] = useState(value);
+  useEffect(() => {
+    const t = setTimeout(() => setDebounced(value), delay);
+    return () => clearTimeout(t);
+  }, [value, delay]);
+  return debounced;
+}
+
+function getStatusColor(status: SiteStatus) {
+  switch (status) {
+    case "active": return "bg-emerald-500/15 text-emerald-400 border-emerald-500/30";
+    case "development": return "bg-blue-500/15 text-blue-400 border-blue-500/30";
+    case "maintenance": return "bg-yellow-500/15 text-yellow-400 border-yellow-500/30";
+    case "paused": return "bg-muted/50 text-muted-foreground border-border";
+    default: return "bg-muted/50 text-muted-foreground border-border";
+  }
+}
+
+function getStatusLabel(status: SiteStatus) {
+  switch (status) {
+    case "active": return "Ativo";
+    case "development": return "Em Dev";
+    case "maintenance": return "Manutenção";
+    case "paused": return "Pausado";
+    default: return status;
+  }
+}
+
+function getPlatformColor(platform: string) {
+  switch (platform) {
+    case "Lovable": return "bg-pink-500/15 text-pink-400 border-pink-500/30";
+    case "Replit": return "bg-orange-500/15 text-orange-400 border-orange-500/30";
+    case "WordPress": return "bg-sky-500/15 text-sky-400 border-sky-500/30";
+    case "Webflow": return "bg-blue-500/15 text-blue-400 border-blue-500/30";
+    case "Next.js": return "bg-slate-400/15 text-slate-300 border-slate-400/30";
+    case "Shopify": return "bg-emerald-500/15 text-emerald-400 border-emerald-500/30";
+    default: return "bg-violet-500/15 text-violet-400 border-violet-500/30";
+  }
+}
+
+function getEditLabel(platform: string) {
+  if (platform === "Lovable") return "Abrir no Lovable";
+  if (platform === "Replit") return "Abrir no Replit";
+  if (platform === "Webflow") return "Abrir no Webflow";
+  return "Abrir Editor";
+}
+
+function getEditIcon(platform: string) {
+  if (platform === "Lovable") return <Zap className="w-3.5 h-3.5" />;
+  if (platform === "Replit") return <Code2 className="w-3.5 h-3.5" />;
+  return <Code2 className="w-3.5 h-3.5" />;
+}
+
+function StatusBadge({ status }: { status: SiteStatus }) {
+  const isActive = status === "active";
+  return (
+    <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border ${getStatusColor(status)}`}>
+      {isActive && (
+        <span className="relative flex h-1.5 w-1.5">
+          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+          <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500" />
+        </span>
+      )}
+      {status === "development" && <Settings className="w-3 h-3 animate-spin [animation-duration:3s]" />}
+      {status === "maintenance" && <Settings className="w-3 h-3" />}
+      {status === "paused" && <PauseCircle className="w-3 h-3" />}
+      {getStatusLabel(status)}
+    </span>
+  );
+}
+
+function MetricBadge({ icon, value, label, suffix = "" }: { icon: React.ReactNode; value: number; label: string; suffix?: string }) {
+  const count = useCountUp(value);
+  return (
+    <div className="flex flex-col items-center gap-0.5">
+      <div className="flex items-center gap-1 text-muted-foreground">
+        {icon}
+        <span className="text-[10px] uppercase tracking-wider font-medium">{label}</span>
+      </div>
+      <span className="text-sm font-bold text-foreground tabular-nums">
+        {count.toLocaleString("pt-BR")}{suffix}
+      </span>
+    </div>
+  );
+}
+
+function DeploymentStatus({ status }: { status: SiteDeployment["status"] }) {
+  if (status === "success") return <CheckCircle2 className="w-4 h-4 text-emerald-500" />;
+  if (status === "failed") return <XCircle className="w-4 h-4 text-red-500" />;
+  return <Loader2 className="w-4 h-4 text-blue-400 animate-spin" />;
+}
+
+function DeploymentHistoryDialog({ site, open, onClose }: { site: Site; open: boolean; onClose: () => void }) {
+  function formatDate(iso: string) {
+    return new Date(iso).toLocaleString("pt-BR", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" });
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={onClose}>
+      <DialogContent className="max-w-lg bg-card border-border/50">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <Rocket className="w-4 h-4 text-primary" />
+            Histórico de Deployments — {site.name}
+          </DialogTitle>
+        </DialogHeader>
+        <div className="space-y-2 max-h-80 overflow-y-auto pr-1">
+          {site.deployments.map((dep) => (
+            <div key={dep.id} className="flex items-start gap-3 p-3 rounded-lg bg-muted/20 border border-border/40 hover:bg-muted/30 transition-colors">
+              <div className="mt-0.5 shrink-0">
+                <DeploymentStatus status={dep.status} />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-foreground truncate">{dep.message}</p>
+                <div className="flex items-center gap-2 mt-1">
+                  <span className="text-xs text-muted-foreground">{dep.author}</span>
+                  <span className="text-xs text-muted-foreground/50">·</span>
+                  <span className="font-mono text-xs text-primary/80">{dep.sha}</span>
+                  <span className="text-xs text-muted-foreground/50">·</span>
+                  <span className="text-xs text-muted-foreground">{formatDate(dep.date)}</span>
+                </div>
+              </div>
+              <Badge
+                variant="outline"
+                className={`text-[10px] shrink-0 ${dep.status === "success" ? "border-emerald-500/30 text-emerald-400" : dep.status === "failed" ? "border-red-500/30 text-red-400" : "border-blue-500/30 text-blue-400"}`}
+              >
+                {dep.status === "success" ? "OK" : dep.status === "failed" ? "FALHA" : "running"}
+              </Badge>
+            </div>
+          ))}
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function SiteThumbnail({ site }: { site: Site }) {
+  return (
+    <div className={`relative w-full h-36 rounded-t-xl bg-gradient-to-br ${site.gradient} overflow-hidden`}>
+      <div className="absolute inset-0 opacity-10">
+        <svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <pattern id={`grid-${site.id}`} width="24" height="24" patternUnits="userSpaceOnUse">
+              <path d="M 24 0 L 0 0 0 24" fill="none" stroke="white" strokeWidth="0.5" />
+            </pattern>
+          </defs>
+          <rect width="100%" height="100%" fill={`url(#grid-${site.id})`} />
+        </svg>
+      </div>
+      <div className="absolute inset-0 flex flex-col items-center justify-center gap-2">
+        <Globe className="w-8 h-8 text-white/60" />
+        <span className="text-white/80 text-xs font-mono truncate px-4 max-w-full">{site.url.replace(/^https?:\/\//, "")}</span>
+      </div>
+      <div className="absolute inset-x-0 bottom-0 h-12 bg-gradient-to-t from-black/40 to-transparent" />
+      <div className="absolute top-2 left-2 right-2 flex items-center justify-between">
+        <StatusBadge status={site.status} />
+        <Badge variant="outline" className={`text-[10px] font-medium border ${getPlatformColor(site.platform)}`}>
+          {site.platform}
+        </Badge>
+      </div>
+    </div>
+  );
+}
+
+function SiteCard({ site }: { site: Site }) {
+  const [showDeployments, setShowDeployments] = useState(false);
+
+  return (
+    <>
+      <Card className="group border-border/40 bg-card/60 backdrop-blur-xl hover:border-primary/30 hover:shadow-lg hover:shadow-primary/5 transition-all duration-300 overflow-hidden flex flex-col p-0">
+        <SiteThumbnail site={site} />
+
+        <div className="flex flex-col flex-1 p-4 gap-3">
+          <div>
+            <div className="flex items-start justify-between gap-2">
+              <div className="min-w-0">
+                <h3 className="font-semibold text-foreground truncate">{site.name}</h3>
+                <p className="text-xs text-muted-foreground truncate mt-0.5">{site.clientName}</p>
+              </div>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <Settings className="h-3.5 w-3.5" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-48">
+                  <DropdownMenuLabel className="text-xs text-muted-foreground">Ações</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <PermissionGuard action="sites.edit" tooltip="Sem permissão para editar." hide>
+                    <DropdownMenuItem className="cursor-pointer text-sm">
+                      Editar detalhes
+                    </DropdownMenuItem>
+                  </PermissionGuard>
+                  {site.adminUrl && (
+                    <DropdownMenuItem className="cursor-pointer text-sm" onClick={() => window.open(site.adminUrl, "_blank")}>
+                      Abrir Admin
+                    </DropdownMenuItem>
+                  )}
+                  <DropdownMenuItem className="cursor-pointer text-sm" onClick={() => setShowDeployments(true)}>
+                    Ver deployments
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <PermissionGuard action="sites.delete" tooltip="Sem permissão para excluir." hide>
+                    <DropdownMenuItem className="text-destructive cursor-pointer focus:bg-destructive/10 text-sm">
+                      Excluir site
+                    </DropdownMenuItem>
+                  </PermissionGuard>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+
+            {site.tags.length > 0 && (
+              <div className="flex flex-wrap gap-1 mt-2">
+                {site.tags.map((tag) => (
+                  <span key={tag} className="inline-flex items-center gap-0.5 text-[10px] px-1.5 py-0.5 rounded bg-muted/40 text-muted-foreground border border-border/40">
+                    <Tag className="w-2.5 h-2.5" />
+                    {tag}
+                  </span>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <div className="grid grid-cols-3 gap-2 py-3 border-y border-border/30">
+            <MetricBadge icon={<Eye className="w-3 h-3" />} value={site.metrics.visitsToday} label="Visitas" />
+            <MetricBadge icon={<TrendingUp className="w-3 h-3" />} value={site.metrics.conversions} label="Conv." />
+            <MetricBadge icon={<Percent className="w-3 h-3" />} value={site.metrics.bounceRate} label="Bounce" suffix="%" />
+          </div>
+
+          <div className="flex items-center gap-1.5 mt-auto">
+            <Button
+              size="sm"
+              className="flex-1 h-8 text-xs gap-1.5"
+              onClick={() => window.open(site.url, "_blank")}
+            >
+              <ExternalLink className="w-3.5 h-3.5" />
+              Abrir Site
+            </Button>
+            {site.editUrl && (
+              <Button
+                size="sm"
+                variant="outline"
+                className="flex-1 h-8 text-xs gap-1.5 border-border/50 hover:border-primary/50"
+                onClick={() => window.open(site.editUrl, "_blank")}
+              >
+                {getEditIcon(site.platform)}
+                {getEditLabel(site.platform)}
+              </Button>
+            )}
+            <Button
+              size="sm"
+              variant="ghost"
+              className="h-8 w-8 p-0 shrink-0 text-muted-foreground hover:text-foreground"
+              onClick={() => setShowDeployments(true)}
+              title="Histórico de deployments"
+            >
+              <Clock className="w-3.5 h-3.5" />
+            </Button>
+          </div>
+        </div>
+      </Card>
+
+      <DeploymentHistoryDialog site={site} open={showDeployments} onClose={() => setShowDeployments(false)} />
+    </>
+  );
+}
+
+function SiteRow({ site }: { site: Site }) {
+  const [showDeployments, setShowDeployments] = useState(false);
+
+  return (
+    <>
+      <tr className="hover:bg-muted/10 transition-colors group">
+        <td className="px-4 py-3">
+          <div className="flex items-center gap-3">
+            <div className={`w-8 h-8 rounded-lg bg-gradient-to-br ${site.gradient} flex items-center justify-center shrink-0`}>
+              <Globe className="w-4 h-4 text-white/80" />
+            </div>
+            <div className="min-w-0">
+              <div className="font-medium text-foreground truncate">{site.name}</div>
+              <a href={site.url} target="_blank" rel="noreferrer" className="text-xs text-muted-foreground hover:text-primary flex items-center gap-1 mt-0.5 w-fit">
+                {site.url.replace(/^https?:\/\//, "")}
+                <ExternalLink className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" />
+              </a>
+            </div>
+          </div>
+        </td>
+        <td className="px-4 py-3 text-sm text-muted-foreground">{site.clientName}</td>
+        <td className="px-4 py-3"><StatusBadge status={site.status} /></td>
+        <td className="px-4 py-3">
+          <Badge variant="outline" className={`text-xs border ${getPlatformColor(site.platform)}`}>{site.platform}</Badge>
+        </td>
+        <td className="px-4 py-3">
+          <div className="flex items-center gap-3 text-xs tabular-nums">
+            <span className="flex items-center gap-1 text-muted-foreground">
+              <Eye className="w-3 h-3" />
+              {site.metrics.visitsToday.toLocaleString("pt-BR")}
+            </span>
+            <span className="flex items-center gap-1 text-muted-foreground">
+              <TrendingUp className="w-3 h-3" />
+              {site.metrics.conversions}
+            </span>
+            <span className="flex items-center gap-1 text-muted-foreground">
+              <Percent className="w-3 h-3" />
+              {site.metrics.bounceRate}%
+            </span>
+          </div>
+        </td>
+        <td className="px-4 py-3 text-right">
+          <div className="flex items-center justify-end gap-1">
+            <Button size="sm" variant="ghost" className="h-7 px-2 text-xs gap-1" onClick={() => window.open(site.url, "_blank")}>
+              <ExternalLink className="w-3 h-3" />
+              Abrir
+            </Button>
+            {site.editUrl && (
+              <Button size="sm" variant="ghost" className="h-7 px-2 text-xs gap-1" onClick={() => window.open(site.editUrl, "_blank")}>
+                {getEditIcon(site.platform)}
+                Editor
+              </Button>
+            )}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" className="h-7 w-7">
+                  <Settings className="h-3.5 w-3.5" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-48">
+                <PermissionGuard action="sites.edit" tooltip="Sem permissão para editar." hide>
+                  <DropdownMenuItem className="cursor-pointer text-sm">Editar detalhes</DropdownMenuItem>
+                </PermissionGuard>
+                {site.adminUrl && (
+                  <DropdownMenuItem className="cursor-pointer text-sm" onClick={() => window.open(site.adminUrl, "_blank")}>Abrir Admin</DropdownMenuItem>
+                )}
+                <DropdownMenuItem className="cursor-pointer text-sm" onClick={() => setShowDeployments(true)}>Ver deployments</DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <PermissionGuard action="sites.delete" tooltip="Sem permissão para excluir." hide>
+                  <DropdownMenuItem className="text-destructive cursor-pointer focus:bg-destructive/10 text-sm">Excluir site</DropdownMenuItem>
+                </PermissionGuard>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        </td>
+      </tr>
+      <DeploymentHistoryDialog site={site} open={showDeployments} onClose={() => setShowDeployments(false)} />
+    </>
+  );
+}
+
+function StatCard({ title, value, className = "text-foreground" }: { title: string; value: number; className?: string }) {
+  const count = useCountUp(value);
+  return (
+    <Card className="border-border/50 bg-card/50 backdrop-blur-xl">
+      <CardContent className="p-4 flex flex-col items-center text-center">
+        <p className="text-xs font-medium text-muted-foreground mb-1">{title}</p>
+        <p className={`text-2xl font-bold tabular-nums ${className}`}>{count}</p>
+      </CardContent>
+    </Card>
+  );
+}
+
 export default function Sites() {
-  const [search, setSearch] = useState("");
-  const { data: sites, isLoading } = useListSites({ search: search || undefined });
-  const { data: stats, isLoading: statsLoading } = useGetSiteStats();
+  const { filter, setSearch, setStatus, setPlatform, clearFilters, filteredSites, stats } = useSitesStore();
+  const [rawSearch, setRawSearch] = useState(filter.search);
+  const [view, setView] = useState<"grid" | "list">("grid");
+  const debouncedSearch = useDebounce(rawSearch, 300);
 
-  const getStatusColor = (status: SiteStatus) => {
-    switch (status) {
-      case "active": return "bg-emerald-500/10 text-emerald-500 border-emerald-500/20";
-      case "development": return "bg-blue-500/10 text-blue-500 border-blue-500/20";
-      case "maintenance": return "bg-yellow-500/10 text-yellow-500 border-yellow-500/20";
-      case "paused": return "bg-muted text-muted-foreground border-border";
-      default: return "bg-muted text-muted-foreground border-border";
-    }
-  };
+  useEffect(() => {
+    setSearch(debouncedSearch);
+  }, [debouncedSearch, setSearch]);
 
-  const getStatusLabel = (status: SiteStatus) => {
-    switch (status) {
-      case "active": return "Ativo";
-      case "development": return "Em Desenvolvimento";
-      case "maintenance": return "Manutenção";
-      case "paused": return "Pausado";
-      default: return status;
-    }
-  };
+  const sites = filteredSites();
+  const s = stats();
+  const hasFilters = filter.search || filter.status !== "all" || filter.platform !== "all";
 
-  const getStatusIcon = (status: SiteStatus) => {
-    switch (status) {
-      case "active": return <Activity className="w-3 h-3 mr-1" />;
-      case "development": return <Settings className="w-3 h-3 mr-1" />;
-      case "maintenance": return <Settings className="w-3 h-3 mr-1" />;
-      case "paused": return <PauseCircle className="w-3 h-3 mr-1" />;
-      default: return null;
-    }
-  };
+  const activePlatforms = PLATFORMS.filter((p) => p === "all" || useSitesStore.getState().sites.some((s) => s.platform === p));
 
   return (
     <div className="flex flex-col gap-6 animate-in fade-in duration-500">
@@ -63,153 +448,169 @@ export default function Sites() {
         </PermissionGuard>
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-        <StatCard title="Total" value={stats?.total} loading={statsLoading} />
-        <StatCard title="Ativos" value={stats?.active} loading={statsLoading} className="text-emerald-500" />
-        <StatCard title="Em Desenvolvimento" value={stats?.development} loading={statsLoading} className="text-blue-500" />
-        <StatCard title="Manutenção" value={stats?.maintenance} loading={statsLoading} className="text-yellow-500" />
-        <StatCard title="Pausados" value={stats?.paused} loading={statsLoading} className="text-muted-foreground" />
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+        <StatCard title="Total" value={s.total} />
+        <StatCard title="Ativos" value={s.active} className="text-emerald-400" />
+        <StatCard title="Em Desenvolvimento" value={s.development} className="text-blue-400" />
+        <StatCard title="Manutenção" value={s.maintenance} className="text-yellow-400" />
+        <StatCard title="Pausados" value={s.paused} className="text-muted-foreground" />
       </div>
 
-      <Card className="border-border/50 bg-card/50 backdrop-blur-xl">
-        <div className="p-4 border-b border-border/50 flex items-center gap-4">
-          <div className="relative flex-1 max-w-sm">
+      <div className="flex flex-col gap-3">
+        <div className="flex items-center gap-3 flex-wrap">
+          <div className="relative flex-1 min-w-52">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input
-              placeholder="Buscar sites..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="pl-9 bg-background/50 border-border/50"
+              placeholder="Buscar por nome, URL, cliente ou tag..."
+              value={rawSearch}
+              onChange={(e) => setRawSearch(e.target.value)}
+              className="pl-9 pr-8 bg-background/50 border-border/50 h-9"
               data-testid="input-search-sites"
             />
+            {rawSearch && (
+              <button
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                onClick={() => { setRawSearch(""); setSearch(""); }}
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            )}
+          </div>
+
+          <div className="flex items-center gap-2">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm" className={`h-9 gap-2 border-border/50 ${filter.status !== "all" ? "border-primary/50 text-primary" : ""}`}>
+                  <Filter className="w-3.5 h-3.5" />
+                  {filter.status === "all" ? "Status" : getStatusLabel(filter.status as SiteStatus)}
+                  <ChevronDown className="w-3 h-3 opacity-60" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" className="w-40">
+                {STATUSES.map((s) => (
+                  <DropdownMenuItem
+                    key={s.value}
+                    className={`cursor-pointer text-sm ${filter.status === s.value ? "text-primary font-medium" : ""}`}
+                    onClick={() => setStatus(s.value as SiteStatus | "all")}
+                  >
+                    {s.label}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm" className={`h-9 gap-2 border-border/50 ${filter.platform !== "all" ? "border-primary/50 text-primary" : ""}`}>
+                  <Globe className="w-3.5 h-3.5" />
+                  {filter.platform === "all" ? "Plataforma" : filter.platform}
+                  <ChevronDown className="w-3 h-3 opacity-60" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" className="w-44">
+                {activePlatforms.map((p) => (
+                  <DropdownMenuItem
+                    key={p}
+                    className={`cursor-pointer text-sm ${filter.platform === p ? "text-primary font-medium" : ""}`}
+                    onClick={() => setPlatform(p as SitePlatform | "all")}
+                  >
+                    {p === "all" ? "Todas" : p}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+
+            {hasFilters && (
+              <Button variant="ghost" size="sm" className="h-9 text-muted-foreground hover:text-foreground gap-1.5" onClick={() => { clearFilters(); setRawSearch(""); }}>
+                <X className="w-3.5 h-3.5" />
+                Limpar
+              </Button>
+            )}
+          </div>
+
+          <div className="flex items-center gap-1 ml-auto border border-border/50 rounded-lg p-0.5">
+            <Button
+              variant={view === "grid" ? "secondary" : "ghost"}
+              size="icon"
+              className="h-7 w-7"
+              onClick={() => setView("grid")}
+            >
+              <LayoutGrid className="w-3.5 h-3.5" />
+            </Button>
+            <Button
+              variant={view === "list" ? "secondary" : "ghost"}
+              size="icon"
+              className="h-7 w-7"
+              onClick={() => setView("list")}
+            >
+              <List className="w-3.5 h-3.5" />
+            </Button>
           </div>
         </div>
 
-        <div className="p-0 overflow-x-auto">
-          <table className="w-full text-sm text-left">
-            <thead className="text-xs text-muted-foreground bg-muted/20 uppercase border-b border-border/50">
-              <tr>
-                <th className="px-6 py-4 font-medium">Site & URL</th>
-                <th className="px-6 py-4 font-medium">Cliente</th>
-                <th className="px-6 py-4 font-medium">Status</th>
-                <th className="px-6 py-4 font-medium">Plataforma</th>
-                <th className="px-6 py-4 font-medium text-right">Ações</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-border/50">
-              {isLoading ? (
-                Array.from({ length: 5 }).map((_, i) => (
-                  <tr key={i}>
-                    <td className="px-6 py-4"><Skeleton className="h-5 w-48" /></td>
-                    <td className="px-6 py-4"><Skeleton className="h-5 w-32" /></td>
-                    <td className="px-6 py-4"><Skeleton className="h-6 w-24 rounded-full" /></td>
-                    <td className="px-6 py-4"><Skeleton className="h-5 w-20" /></td>
-                    <td className="px-6 py-4 text-right"><Skeleton className="h-8 w-8 ml-auto rounded-md" /></td>
-                  </tr>
-                ))
-              ) : sites?.length === 0 ? (
-                <tr>
-                  <td colSpan={5} className="px-6 py-12 text-center text-muted-foreground">
-                    <Globe className="w-12 h-12 mx-auto mb-3 opacity-20" />
-                    <p>Nenhum site encontrado para os critérios informados.</p>
-                  </td>
-                </tr>
-              ) : (
-                sites?.map((site) => (
-                  <tr key={site.id} className="hover:bg-muted/10 transition-colors group">
-                    <td className="px-6 py-4">
-                      <div className="font-medium text-foreground">{site.name}</div>
-                      <a
-                        href={site.url}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="text-xs text-muted-foreground hover:text-primary flex items-center gap-1 mt-1 w-fit"
-                      >
-                        {site.url.replace(/^https?:\/\//, "")}
-                        <ExternalLink className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" />
-                      </a>
-                    </td>
-                    <td className="px-6 py-4 text-muted-foreground">
-                      {site.clientName || "—"}
-                    </td>
-                    <td className="px-6 py-4">
-                      <Badge
-                        variant="outline"
-                        className={`px-2.5 py-0.5 rounded-full font-medium ${getStatusColor(site.status)}`}
-                      >
-                        {getStatusIcon(site.status)}
-                        <span>{getStatusLabel(site.status)}</span>
-                      </Badge>
-                    </td>
-                    <td className="px-6 py-4 text-muted-foreground">
-                      {site.platform || "—"}
-                    </td>
-                    <td className="px-6 py-4 text-right">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8"
-                            data-testid={`btn-site-actions-${site.id}`}
-                          >
-                            <MoreVertical className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="w-44">
-                          <PermissionGuard action="sites.edit" tooltip="Sem permissão para editar." hide>
-                            <DropdownMenuItem className="cursor-pointer">
-                              Editar detalhes
-                            </DropdownMenuItem>
-                          </PermissionGuard>
-                          {site.adminUrl && (
-                            <DropdownMenuItem
-                              className="cursor-pointer"
-                              onClick={() => window.open(site.adminUrl, "_blank")}
-                            >
-                              Abrir Admin
-                            </DropdownMenuItem>
-                          )}
-                          <PermissionGuard action="sites.delete" tooltip="Sem permissão para excluir." hide>
-                            <DropdownMenuItem className="text-destructive cursor-pointer focus:bg-destructive focus:text-destructive-foreground">
-                              Excluir site
-                            </DropdownMenuItem>
-                          </PermissionGuard>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
-      </Card>
-    </div>
-  );
-}
+        {filter.status !== "all" || filter.platform !== "all" ? (
+          <div className="flex items-center gap-2 flex-wrap">
+            {filter.status !== "all" && (
+              <span className={`inline-flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full border font-medium ${getStatusColor(filter.status as SiteStatus)}`}>
+                {getStatusLabel(filter.status as SiteStatus)}
+                <button onClick={() => setStatus("all")}><X className="w-3 h-3" /></button>
+              </span>
+            )}
+            {filter.platform !== "all" && (
+              <span className={`inline-flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full border font-medium ${getPlatformColor(filter.platform)}`}>
+                {filter.platform}
+                <button onClick={() => setPlatform("all")}><X className="w-3 h-3" /></button>
+              </span>
+            )}
+          </div>
+        ) : null}
+      </div>
 
-function StatCard({
-  title,
-  value,
-  loading,
-  className = "text-foreground",
-}: {
-  title: string;
-  value?: number;
-  loading: boolean;
-  className?: string;
-}) {
-  return (
-    <Card className="border-border/50 bg-card/50 backdrop-blur-xl">
-      <CardContent className="p-4 flex flex-col items-center text-center">
-        <p className="text-xs font-medium text-muted-foreground mb-1">{title}</p>
-        {loading ? (
-          <Skeleton className="h-7 w-12" />
-        ) : (
-          <p className={`text-2xl font-bold ${className}`}>{value || 0}</p>
-        )}
-      </CardContent>
-    </Card>
+      {sites.length === 0 ? (
+        <div className="flex flex-col items-center justify-center py-20 gap-3 text-center">
+          <Globe className="w-14 h-14 text-muted-foreground/20" />
+          <p className="text-muted-foreground">Nenhum site encontrado para os critérios informados.</p>
+          {hasFilters && (
+            <Button variant="outline" size="sm" onClick={() => { clearFilters(); setRawSearch(""); }}>
+              Limpar filtros
+            </Button>
+          )}
+        </div>
+      ) : view === "grid" ? (
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+          {sites.map((site) => (
+            <SiteCard key={site.id} site={site} />
+          ))}
+        </div>
+      ) : (
+        <Card className="border-border/50 bg-card/50 backdrop-blur-xl overflow-hidden p-0">
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm text-left">
+              <thead className="text-xs text-muted-foreground bg-muted/20 uppercase border-b border-border/50">
+                <tr>
+                  <th className="px-4 py-3 font-medium">Site & URL</th>
+                  <th className="px-4 py-3 font-medium">Cliente</th>
+                  <th className="px-4 py-3 font-medium">Status</th>
+                  <th className="px-4 py-3 font-medium">Plataforma</th>
+                  <th className="px-4 py-3 font-medium">Métricas</th>
+                  <th className="px-4 py-3 font-medium text-right">Ações</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border/40">
+                {sites.map((site) => (
+                  <SiteRow key={site.id} site={site} />
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </Card>
+      )}
+
+      {sites.length > 0 && (
+        <p className="text-xs text-muted-foreground text-center pb-2">
+          Exibindo {sites.length} de {useSitesStore.getState().sites.length} sites
+        </p>
+      )}
+    </div>
   );
 }
