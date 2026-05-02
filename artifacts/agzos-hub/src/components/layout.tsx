@@ -13,7 +13,8 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useState } from "react";
-import { useAuthStore, AuthUser } from "@/store/useAuthStore";
+import { useAuthStore } from "@/store/useAuthStore";
+import type { AuthUser } from "@/store/useAuthStore";
 import { ROLE_LABELS, ROLE_COLORS, NavModule } from "@/lib/permissions";
 import { RoleSwitcher } from "@/components/RoleSwitcher";
 

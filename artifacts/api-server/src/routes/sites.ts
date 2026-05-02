@@ -41,7 +41,7 @@ router.get("/sites", async (req, res) => {
 
     const clientIds = [...new Set(sites.map((s) => s.clientId).filter(Boolean))] as number[];
     const clients = clientIds.length
-      ? await db.select().from(clientsTable).where(sql`id = ANY(${clientIds})`)
+      ? await db.select().from(clientsTable).where(sql`id = ANY(ARRAY[${sql.join(clientIds.map(id => sql`${id}`), sql`, `)}]::int[])`)
       : [];
     const clientMap = Object.fromEntries(clients.map((c) => [c.id, c.name]));
 
