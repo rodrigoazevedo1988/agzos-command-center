@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import {
   ResponsiveContainer, AreaChart, Area, BarChart, Bar, LineChart, Line,
   PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip,
@@ -10,7 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import {
   TrendingUp, TrendingDown, Download, FileSpreadsheet, FileText,
   DollarSign, Users, Target, Briefcase, ArrowUpRight, ArrowDownRight,
-  BarChart2, PieChart as PieIcon, Activity, Printer,
+  BarChart2, PieChart as PieIcon, Activity, Printer, Loader2,
 } from "lucide-react";
 import { useReportsStore, ReportPeriod } from "@/store/useReportsStore";
 
@@ -348,10 +348,155 @@ function ChannelTable() {
   );
 }
 
-// ─── Print/PDF helper ─────────────────────────────────────────────────────────
+// ─── PDF export helper ────────────────────────────────────────────────────────
 
-function handlePrint() {
-  window.print();
+async function generatePDF(
+  reportRef: React.RefObject<HTMLDivElement>,
+  kpis: ReturnType<typeof useReportsStore.getState>["kpis"],
+  period: ReportPeriod,
+  setPdfLoading: (v: boolean) => void
+) {
+  setPdfLoading(true);
+  try {
+    const [{ default: jsPDF }, { default: html2canvas }] = await Promise.all([
+      import("jspdf"),
+      import("html2canvas"),
+    ]);
+
+    const PERIOD_LABELS: Record<ReportPeriod, string> = {
+      "3m": "Últimos 3 meses", "6m": "Últimos 6 meses",
+      "12m": "Últimos 12 meses", "ytd": "Ano atual",
+    };
+
+    const pdf = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+    const W = pdf.internal.pageSize.getWidth();
+    const H = pdf.internal.pageSize.getHeight();
+    const now = new Date();
+    const dateStr = now.toLocaleDateString("pt-BR", { day: "2-digit", month: "long", year: "numeric" });
+
+    // ── Cover page ──────────────────────────────────────────────
+    pdf.setFillColor(10, 10, 10);
+    pdf.rect(0, 0, W, H, "F");
+
+    // Accent bar
+    pdf.setFillColor(168, 85, 247);
+    pdf.rect(0, 0, 6, H, "F");
+
+    // Title
+    pdf.setTextColor(255, 255, 255);
+    pdf.setFontSize(28);
+    pdf.setFont("helvetica", "bold");
+    pdf.text("Relatório de Performance", 16, 60);
+
+    pdf.setFontSize(13);
+    pdf.setTextColor(168, 85, 247);
+    pdf.setFont("helvetica", "normal");
+    pdf.text("Agzos Hub — Sistema de Gestão de Agência", 16, 72);
+
+    pdf.setFontSize(11);
+    pdf.setTextColor(180, 180, 180);
+    pdf.text(`Período: ${PERIOD_LABELS[period]}`, 16, 84);
+    pdf.text(`Gerado em: ${dateStr}`, 16, 91);
+
+    // KPI summary boxes
+    const kpiItems = [
+      { label: "Receita Total", value: BRL(kpis.totalRevenue), color: [168, 85, 247] as [number,number,number] },
+      { label: "ROI Médio",     value: `${kpis.averageRoi.toFixed(1)}%`,  color: [16, 185, 129] as [number,number,number] },
+      { label: "Clientes Ativos", value: String(kpis.activeClients), color: [59, 130, 246] as [number,number,number] },
+      { label: "Projetos Entregues", value: String(kpis.deliveredProjects), color: [234, 179, 8] as [number,number,number] },
+    ];
+    const boxW = (W - 32 - 9) / 4;
+    kpiItems.forEach((item, i) => {
+      const x = 16 + i * (boxW + 3);
+      const y = 108;
+      pdf.setFillColor(30, 30, 30);
+      pdf.roundedRect(x, y, boxW, 28, 2, 2, "F");
+      pdf.setFillColor(...item.color);
+      pdf.roundedRect(x, y, boxW, 2.5, 1, 1, "F");
+      pdf.setTextColor(255, 255, 255);
+      pdf.setFontSize(13);
+      pdf.setFont("helvetica", "bold");
+      pdf.text(item.value, x + 4, y + 16);
+      pdf.setFontSize(7);
+      pdf.setFont("helvetica", "normal");
+      pdf.setTextColor(170, 170, 170);
+      pdf.text(item.label, x + 4, y + 23);
+    });
+
+    // Divider
+    pdf.setDrawColor(50, 50, 50);
+    pdf.setLineWidth(0.5);
+    pdf.line(16, 145, W - 16, 145);
+
+    pdf.setTextColor(120, 120, 120);
+    pdf.setFontSize(8);
+    pdf.text("Este relatório foi gerado automaticamente pelo Agzos Hub.", 16, 152);
+    pdf.text("Todos os dados refletem o estado atual do sistema.", 16, 158);
+
+    // Footer on cover
+    pdf.setFontSize(7);
+    pdf.setTextColor(80, 80, 80);
+    pdf.text(`Agzos Hub  •  agzos.agency  •  ${dateStr}`, W / 2, H - 8, { align: "center" });
+
+    // ── Content pages (snapshot of DOM) ─────────────────────────
+    if (reportRef.current) {
+      pdf.addPage();
+
+      const canvas = await html2canvas(reportRef.current, {
+        backgroundColor: "#0a0a0a",
+        scale: 1.5,
+        useCORS: true,
+        logging: false,
+        windowWidth: 1200,
+      });
+
+      const imgData = canvas.toDataURL("image/jpeg", 0.85);
+      const ratio = canvas.width / canvas.height;
+      const imgW = W - 20;
+      const imgH = imgW / ratio;
+      const pageContentH = H - 20;
+      let yPos = 10;
+      let remaining = imgH;
+      let srcY = 0;
+
+      while (remaining > 0) {
+        const sliceH = Math.min(remaining, pageContentH);
+        const srcH = (sliceH / imgH) * canvas.height;
+
+        // Create a slice canvas
+        const sliceCanvas = document.createElement("canvas");
+        sliceCanvas.width = canvas.width;
+        sliceCanvas.height = srcH;
+        const ctx = sliceCanvas.getContext("2d")!;
+        ctx.drawImage(canvas, 0, srcY, canvas.width, srcH, 0, 0, canvas.width, srcH);
+        const sliceData = sliceCanvas.toDataURL("image/jpeg", 0.85);
+
+        pdf.addImage(sliceData, "JPEG", 10, yPos, imgW, sliceH);
+        remaining -= sliceH;
+        srcY += srcH;
+        if (remaining > 0) {
+          pdf.addPage();
+          yPos = 10;
+        }
+      }
+
+      // Footer on all pages
+      const totalPages = pdf.getNumberOfPages();
+      for (let pg = 1; pg <= totalPages; pg++) {
+        pdf.setPage(pg);
+        pdf.setFontSize(7);
+        pdf.setTextColor(80, 80, 80);
+        pdf.text(`Agzos Hub  •  ${dateStr}  •  Página ${pg} de ${totalPages}`, W / 2, H - 4, { align: "center" });
+      }
+    }
+
+    const filename = `agzos-relatorio-${period}-${now.getFullYear()}${String(now.getMonth()+1).padStart(2,"0")}.pdf`;
+    pdf.save(filename);
+  } catch (err) {
+    console.error("PDF error:", err);
+  } finally {
+    setPdfLoading(false);
+  }
 }
 
 // ─── Main Page ─────────────────────────────────────────────────────────────────
@@ -359,6 +504,8 @@ function handlePrint() {
 export default function Reports() {
   const { kpis, period, setPeriod, exportCsv } = useReportsStore();
   const [activeTab, setActiveTab] = useState<"overview" | "clients" | "channels" | "forecast">("overview");
+  const [pdfLoading, setPdfLoading] = useState(false);
+  const reportRef = useRef<HTMLDivElement>(null);
 
   const tabs = [
     { id: "overview",  label: "Visão Geral",  icon: BarChart2 },
@@ -377,14 +524,26 @@ export default function Reports() {
         </div>
         <div className="flex items-center gap-2 flex-wrap">
           <PeriodSelector value={period} onChange={setPeriod} />
-          <Button variant="outline" size="sm" className="gap-1.5 text-xs border-border/50" onClick={handlePrint}>
-            <Printer className="w-3.5 h-3.5" /> Imprimir / PDF
+          <Button
+            variant="outline"
+            size="sm"
+            className="gap-1.5 text-xs border-border/50"
+            disabled={pdfLoading}
+            onClick={() => generatePDF(reportRef, kpis, period, setPdfLoading)}
+          >
+            {pdfLoading
+              ? <><Loader2 className="w-3.5 h-3.5 animate-spin" /> Gerando PDF...</>
+              : <><FileText className="w-3.5 h-3.5" /> Exportar PDF</>
+            }
           </Button>
           <Button variant="outline" size="sm" className="gap-1.5 text-xs border-border/50" onClick={() => exportCsv("revenue")}>
-            <FileSpreadsheet className="w-3.5 h-3.5" /> Exportar Receita
+            <FileSpreadsheet className="w-3.5 h-3.5" /> Exportar CSV
           </Button>
         </div>
       </div>
+
+      {/* Capturable content for PDF */}
+      <div ref={reportRef}>
 
       {/* KPI Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
@@ -571,6 +730,8 @@ export default function Reports() {
           </Card>
         </div>
       )}
+
+      </div>{/* end reportRef */}
     </div>
   );
 }

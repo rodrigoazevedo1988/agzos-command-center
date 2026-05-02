@@ -15,6 +15,7 @@ import Tools from "@/pages/tools";
 import NotificationsPage from "@/pages/notifications";
 import Reports from "@/pages/reports";
 import SettingsPage from "@/pages/settings";
+import CalendarPage from "@/pages/calendar";
 import NotFound from "@/pages/not-found";
 
 const queryClient = new QueryClient();
@@ -33,6 +34,7 @@ function Router() {
         <Route path="/notifications" component={NotificationsPage} />
         <Route path="/reports" component={Reports} />
         <Route path="/settings" component={SettingsPage} />
+        <Route path="/calendar" component={CalendarPage} />
         <Route component={NotFound} />
       </Switch>
     </AppLayout>

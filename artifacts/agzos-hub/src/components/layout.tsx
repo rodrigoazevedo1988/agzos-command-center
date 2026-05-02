@@ -1,40 +1,33 @@
 import { Link, useLocation } from "wouter";
 import {
-  LayoutDashboard,
-  Globe,
-  LayoutList,
-  Users,
-  UsersRound,
-  DollarSign,
-  Wrench,
-  Menu,
-  Bell,
-  BarChart2,
-  Settings,
-  Search,
+  LayoutDashboard, Globe, LayoutList, Users, UsersRound,
+  DollarSign, Wrench, Menu, Bell, BarChart2, Settings,
+  Search, Sun, Moon, CalendarDays,
 } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuthStore } from "@/store/useAuthStore";
 import type { AuthUser } from "@/store/useAuthStore";
 import { ROLE_LABELS, ROLE_COLORS, NavModule } from "@/lib/permissions";
 import { RoleSwitcher } from "@/components/RoleSwitcher";
 import { NotificationBell } from "@/components/NotificationBell";
 import { CommandPalette } from "@/components/CommandPalette";
+import { useThemeStore } from "@/store/useThemeStore";
 import { useNotificationsStore, selectUnreadCount } from "@/store/useNotificationsStore";
 
 const NAV_ITEMS: { href: string; label: string; icon: any; module: NavModule }[] = [
-  { href: "/", label: "Dashboard", icon: LayoutDashboard, module: "dashboard" },
-  { href: "/sites", label: "Sites", icon: Globe, module: "sites" },
-  { href: "/projects", label: "Projetos", icon: LayoutList, module: "projects" },
-  { href: "/clients", label: "Clientes", icon: Users, module: "clients" },
-  { href: "/team", label: "Equipe", icon: UsersRound, module: "team" },
-  { href: "/financial", label: "Financeiro", icon: DollarSign, module: "financial" },
-  { href: "/tools", label: "Ferramentas", icon: Wrench, module: "tools" },
-  { href: "/reports", label: "Relatórios", icon: BarChart2, module: "reports" },
-  { href: "/settings", label: "Configurações", icon: Settings, module: "settings" },
+  { href: "/",             label: "Dashboard",     icon: LayoutDashboard, module: "dashboard" },
+  { href: "/sites",        label: "Sites",         icon: Globe,           module: "sites" },
+  { href: "/projects",     label: "Projetos",      icon: LayoutList,      module: "projects" },
+  { href: "/clients",      label: "Clientes",      icon: Users,           module: "clients" },
+  { href: "/team",         label: "Equipe",        icon: UsersRound,      module: "team" },
+  { href: "/financial",    label: "Financeiro",    icon: DollarSign,      module: "financial" },
+  { href: "/tools",        label: "Ferramentas",   icon: Wrench,          module: "tools" },
+  { href: "/calendar",     label: "Calendário",    icon: CalendarDays,    module: "calendar" },
+  { href: "/reports",      label: "Relatórios",    icon: BarChart2,       module: "reports" },
+  { href: "/settings",     label: "Configurações", icon: Settings,        module: "settings" },
 ];
 
 const NOTIF_NAV = { href: "/notifications", label: "Notificações", icon: Bell };
@@ -73,15 +66,9 @@ function NotifNavLink({ location, onNavigate }: { location: string; onNavigate: 
 }
 
 function SidebarNav({
-  visibleItems,
-  location,
-  user,
-  onNavigate,
+  visibleItems, location, user, onNavigate,
 }: {
-  visibleItems: typeof NAV_ITEMS;
-  location: string;
-  user: AuthUser;
-  onNavigate: () => void;
+  visibleItems: typeof NAV_ITEMS; location: string; user: AuthUser; onNavigate: () => void;
 }) {
   return (
     <div className="flex flex-col gap-2 p-4 h-full bg-sidebar border-r border-sidebar-border">
@@ -92,7 +79,7 @@ function SidebarNav({
         <p className="text-xs text-sidebar-foreground/40 mt-0.5">Sistema Interno</p>
       </div>
 
-      <nav className="flex flex-col gap-1 flex-1">
+      <nav className="flex flex-col gap-1 flex-1 overflow-y-auto">
         {visibleItems.map((item) => {
           const isActive =
             location === item.href ||
@@ -115,7 +102,6 @@ function SidebarNav({
         })}
       </nav>
 
-      {/* Notifications link */}
       <NotifNavLink location={location} onNavigate={onNavigate} />
 
       <div className="mt-auto pt-4 border-t border-sidebar-border space-y-3">
@@ -146,11 +132,25 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const user = useAuthStore((s) => s.user);
   const canAccessModule = useAuthStore((s) => s.canAccessModule);
+  const { theme, toggle } = useThemeStore();
+
+  // Apply theme class to <html>
+  useEffect(() => {
+    const root = document.documentElement;
+    root.classList.toggle("dark", theme === "dark");
+    root.classList.toggle("light", theme === "light");
+  }, [theme]);
 
   const visibleItems = NAV_ITEMS.filter((item) => canAccessModule(item.module));
 
+  const openCmd = () => {
+    document.dispatchEvent(
+      new KeyboardEvent("keydown", { key: "k", metaKey: true, bubbles: true })
+    );
+  };
+
   return (
-    <div className="flex min-h-[100dvh] w-full bg-background text-foreground dark">
+    <div className={`flex min-h-[100dvh] w-full bg-background text-foreground ${theme}`}>
       {/* Sidebar Desktop */}
       <aside className="hidden md:block w-64 h-screen sticky top-0 shrink-0">
         <SidebarNav
@@ -161,11 +161,11 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
         />
       </aside>
 
-      {/* Conteúdo principal */}
+      {/* Main content */}
       <div className="flex-1 flex flex-col min-w-0">
         {/* Topbar */}
         <header className="flex items-center justify-between px-4 md:px-8 py-3 border-b border-border bg-card/50 backdrop-blur-xl sticky top-0 z-20">
-          {/* Mobile: logo + hambúrguer */}
+          {/* Mobile: logo + hamburger */}
           <div className="flex items-center gap-3 md:hidden">
             <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
               <SheetTrigger asChild>
@@ -187,23 +187,33 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
             </h1>
           </div>
 
-          {/* Desktop: Cmd+K hint */}
+          {/* Desktop: Cmd+K search hint */}
           <button
-            onClick={() => {
-              const e = new KeyboardEvent("keydown", { key: "k", metaKey: true, bubbles: true });
-              document.dispatchEvent(e);
-            }}
-            className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-lg border border-border/50 bg-muted/20 hover:bg-muted/40 transition-colors text-muted-foreground text-xs"
+            onClick={openCmd}
+            className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-lg border border-border/50 bg-muted/20 hover:bg-muted/40 transition-colors text-muted-foreground text-xs min-w-[200px]"
           >
-            <Search className="w-3.5 h-3.5" />
-            <span>Buscar...</span>
-            <kbd className="ml-2 pointer-events-none inline-flex h-4 select-none items-center gap-1 rounded border border-border/60 bg-muted px-1.5 font-mono text-[9px] font-medium opacity-70">
+            <Search className="w-3.5 h-3.5 shrink-0" />
+            <span className="flex-1 text-left">Buscar...</span>
+            <kbd className="pointer-events-none inline-flex h-4 select-none items-center gap-1 rounded border border-border/60 bg-muted px-1.5 font-mono text-[9px] font-medium opacity-70">
               ⌘K
             </kbd>
           </button>
 
           {/* Topbar right */}
           <div className="flex items-center gap-2">
+            {/* Dark/Light toggle */}
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={toggle}
+              className="h-9 w-9 text-muted-foreground hover:text-foreground"
+              title={theme === "dark" ? "Ativar modo claro" : "Ativar modo escuro"}
+            >
+              {theme === "dark"
+                ? <Sun className="w-4 h-4" />
+                : <Moon className="w-4 h-4" />
+              }
+            </Button>
             <NotificationBell />
             <RoleSwitcher />
           </div>
@@ -213,6 +223,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
           <div className="mx-auto max-w-7xl">{children}</div>
         </main>
       </div>
+
       <CommandPalette />
     </div>
   );
