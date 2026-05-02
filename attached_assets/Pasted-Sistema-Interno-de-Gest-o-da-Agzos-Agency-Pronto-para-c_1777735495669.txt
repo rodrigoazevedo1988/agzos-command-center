@@ -1,0 +1,158 @@
+Sistema Interno de Gestão da Agzos Agency
+(Pronto para copiar e colar direto no Replit ou Lovable)
+
+🎨 DESIGN SYSTEM (padrão obrigatório para todo o sistema)
+Paleta de cores
+
+Primária: Roxo Gradiente (#6B46C1 → #A855F7)
+Secundária: Verde Performance (#10B981)
+Neutra principal: Preto (#0A0A0A)
+Neutra clara: Off-white (#F8FAFC)
+Suporte: Cinza (#64748B), Azul confiança (#3B82F6)
+
+Tipografia
+
+Títulos: Inter Bold
+Textos corridos: Inter Regular
+
+Espaçamentos
+
+Base: múltiplos de 8px (8 / 16 / 24 / 32 / 48 / 64 / 96px)
+
+Componentes reutilizáveis (obrigatório criar primeiro)
+
+Navbar Global
+Sidebar Navegação
+Card de Projeto/Site
+Tabela de Dados Avançada
+Modal Padrão
+Button Primary (roxo), Button Success (verde), Button Outline
+Dashboard Widgets
+Status Badges
+
+
+🧑 PERSONA & TOM DE VOZ
+Persona principal: Empreendedores digitais, traffic managers, designers e devs de agência que querem criar e gerenciar rápido.
+Tom de voz: Direto, acessível e motivador. Sempre mostra ROI, números e “quanto isso está gerando para a agência”.
+Estilo de comunicação: Amigável + clareza profissional. Frases curtas. Muito foco em resultados e velocidade.
+
+💻 CONVENÇÕES DE CÓDIGO
+
+Nomeação: inglês, camelCase para variáveis/functions, kebab-case para arquivos/pastas
+Estrutura de pastas (obrigatória):text/app
+  /components (reutilizáveis)
+  /lib
+  /hooks
+  /supabase
+  /types
+  /features (por módulo)
+Comentários: claros e objetivos, só quando necessário
+Sempre priorizar código limpo, reutilizável e TypeScript
+
+
+🧭 PRÁTICAS DE UX
+
+Navegação clara e intuitiva (Sidebar + Navbar)
+Acessibilidade mínima: contraste adequado, labels, alt texts
+Totalmente responsivo (mobile → desktop)
+Fluxos com o menor número possível de cliques
+Dashboard sempre mostra métricas de dinheiro e performance
+
+
+🔒 DIRETRIZES DE SEGURANÇA (OBRIGATÓRIO)
+
+Nunca expor chaves de API no front-end
+Usar variáveis de ambiente + Supabase Edge Functions para dados sensíveis
+Validação rigorosa de todas as entradas
+RBAC completo (roles + permissões granulares)
+Armazenamento criptografado de credenciais de sites de clientes
+
+
+⚡ PERFORMANCE & EFICIÊNCIA
+
+Componentes reutilizáveis (nunca duplicar)
+Imagens otimizadas
+Edge Functions apenas quando necessário
+Monitorar logs e créditos periodicamente
+
+
+📌 VISÃO GERAL DO PRODUTO
+Nome: Agzos Hub
+Objetivo: Ser o “cérebro” da agência. Um sistema interno completo que gerencia:
+
+A própria Agzos Agency
+Todos os sites e projetos de clientes
+Equipe, financeiro, acessos, ferramentas e relatórios
+
+Tipo: Aplicação multi-tenant leve (um único login controla tudo)
+Stack recomendada: Next.js 15 + Tailwind + shadcn/ui + Supabase (Auth + Postgres + Storage + Edge Functions)
+
+✅ MÓDULOS PRINCIPAIS (Features completas)
+1. Dashboard Geral (Home)
+
+KPIs em tempo real: Faturamento do mês, ROI médio, Projetos ativos, Sites gerenciados, Ticket médio
+Gráficos: Receita × Despesa, Performance por canal, Projetos atrasados
+Atalhos rápidos: Novo Projeto, Novo Site, Criar Fatura
+
+2. Gestão de Sites / Instâncias (MÓDULO PRINCIPAL)
+
+Lista completa de todos os sites (Agzos + clientes)
+Status: Ativo | Em desenvolvimento | Manutenção | Pausado
+Informações por site: URL, login admin, credenciais criptografadas, preview embed
+Histórico de deployments e alterações
+Métricas automáticas (Google Analytics / Meta / etc.)
+Botão direto “Abrir no Lovable / Replit / Vercel”
+
+3. Gestão de Projetos & Campanhas
+
+Kanban + Lista + Gantt
+Tarefas, subtarefas, responsáveis, prazos, checklist
+Briefs, assets e fluxos de aprovação
+Integração com calendário
+
+4. CRM + Clientes
+
+Funil completo (Lead → Proposta → Contrato → Ativo)
+Cadastro de clientes + contatos
+Contratos com assinatura eletrônica
+Histórico completo de interações
+
+5. Equipe & Acessos (RBAC)
+
+Convites por e-mail com roles:
+Admin (dono)
+Account Manager
+Traffic Manager
+Designer
+Dev
+Financeiro
+Cliente (acesso somente leitura)
+
+Time tracking (horas por projeto)
+Permissões granulares por cliente e módulo
+
+6. Financeiro
+
+Orçamentos por projeto/site
+Faturamento recorrente (mensal/trimestral)
+Emissão de NF (preparado para Omie/Conta Azul)
+Controle de despesas e comissões
+Relatórios de lucratividade por cliente
+
+7. Controle de Ferramentas & Recursos
+
+Cadastro central de todas as contas (Google Ads, Meta, SEMrush, Lovable, etc.)
+Armazenamento seguro de API Keys
+Monitoramento de gastos e créditos
+
+8. Relatórios & Analytics
+
+Relatórios exportáveis (PDF/Excel)
+Dashboard por cliente
+Previsão de receita
+Performance geral da agência
+
+9. Portal do Cliente (recomendado)
+
+Acesso separado para o cliente ver apenas seu projeto/site
+Status, relatórios, faturas e aprovações
