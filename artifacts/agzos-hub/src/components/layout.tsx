@@ -8,13 +8,12 @@ import {
   DollarSign,
   Wrench,
   Menu,
-  LogOut,
 } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useState } from "react";
-import { useAuthStore } from "@/store/useAuthStore";
+import { useAuthStore, AuthUser } from "@/store/useAuthStore";
 import { ROLE_LABELS, ROLE_COLORS, NavModule } from "@/lib/permissions";
 import { RoleSwitcher } from "@/components/RoleSwitcher";
 
@@ -28,16 +27,16 @@ const NAV_ITEMS: { href: string; label: string; icon: any; module: NavModule }[]
   { href: "/tools", label: "Ferramentas", icon: Wrench, module: "tools" },
 ];
 
-function NavContent({
+function SidebarNav({
   visibleItems,
   location,
   user,
-  setMobileOpen,
+  onNavigate,
 }: {
   visibleItems: typeof NAV_ITEMS;
   location: string;
-  user: ReturnType<typeof useAuthStore>["user"] extends infer U ? U : never;
-  setMobileOpen: (v: boolean) => void;
+  user: AuthUser;
+  onNavigate: () => void;
 }) {
   return (
     <div className="flex flex-col gap-2 p-4 h-full bg-sidebar border-r border-sidebar-border">
@@ -54,11 +53,7 @@ function NavContent({
             location === item.href ||
             (item.href !== "/" && location.startsWith(item.href));
           return (
-            <Link
-              key={item.href}
-              href={item.href}
-              onClick={() => setMobileOpen(false)}
-            >
+            <Link key={item.href} href={item.href} onClick={onNavigate}>
               <div
                 className={`flex items-center gap-3 px-3 py-2.5 rounded-md transition-colors cursor-pointer text-sm font-medium ${
                   isActive
@@ -67,9 +62,7 @@ function NavContent({
                 }`}
                 data-testid={`nav-${item.label.toLowerCase()}`}
               >
-                <item.icon
-                  className={`h-4 w-4 shrink-0 ${isActive ? "text-primary" : ""}`}
-                />
+                <item.icon className={`h-4 w-4 shrink-0 ${isActive ? "text-primary" : ""}`} />
                 {item.label}
               </div>
             </Link>
@@ -91,23 +84,33 @@ function NavContent({
             {user.avatarInitials}
           </div>
           <div className="flex flex-col min-w-0">
-            <span className="text-sm font-medium text-sidebar-foreground truncate">
-              {user.name}
-            </span>
-            <span className="text-xs text-sidebar-foreground/50 truncate">
-              {user.email}
-            </span>
+            <span className="text-sm font-medium text-sidebar-foreground truncate">{user.name}</span>
+            <span className="text-xs text-sidebar-foreground/50 truncate">{user.email}</span>
           </div>
         </div>
       </div>
     </div>
   );
+}
+
+export function AppLayout({ children }: { children: React.ReactNode }) {
+  const [location] = useLocation();
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const user = useAuthStore((s) => s.user);
+  const canAccessModule = useAuthStore((s) => s.canAccessModule);
+
+  const visibleItems = NAV_ITEMS.filter((item) => canAccessModule(item.module));
 
   return (
     <div className="flex min-h-[100dvh] w-full bg-background text-foreground dark">
       {/* Sidebar Desktop */}
       <aside className="hidden md:block w-64 h-screen sticky top-0 shrink-0">
-        <NavContent />
+        <SidebarNav
+          visibleItems={visibleItems}
+          location={location}
+          user={user}
+          onNavigate={() => {}}
+        />
       </aside>
 
       {/* Conteúdo principal */}
@@ -118,19 +121,17 @@ function NavContent({
           <div className="flex items-center gap-3 md:hidden">
             <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
               <SheetTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  data-testid="btn-mobile-menu"
-                >
+                <Button variant="ghost" size="icon" data-testid="btn-mobile-menu">
                   <Menu className="h-5 w-5" />
                 </Button>
               </SheetTrigger>
-              <SheetContent
-                side="left"
-                className="p-0 w-64 bg-sidebar border-sidebar-border"
-              >
-                <NavContent />
+              <SheetContent side="left" className="p-0 w-64 bg-sidebar border-sidebar-border">
+                <SidebarNav
+                  visibleItems={visibleItems}
+                  location={location}
+                  user={user}
+                  onNavigate={() => setMobileOpen(false)}
+                />
               </SheetContent>
             </Sheet>
             <h1 className="text-lg font-bold bg-gradient-to-r from-primary to-purple-400 bg-clip-text text-transparent">
@@ -138,10 +139,10 @@ function NavContent({
             </h1>
           </div>
 
-          {/* Desktop: espaço vazio à esquerda para o topbar */}
+          {/* Desktop: espaço para topbar */}
           <div className="hidden md:block" />
 
-          {/* Role Switcher (dev only) */}
+          {/* Role Switcher */}
           <div className="flex items-center gap-3">
             <RoleSwitcher />
           </div>
