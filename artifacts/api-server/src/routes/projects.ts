@@ -94,7 +94,7 @@ router.post("/projects", async (req, res) => {
     const [project] = await db.insert(projectsTable).values({ ...body, progress: 0 }).returning();
     await db.insert(activityTable).values({
       type: "project_created",
-      description: `New project created: ${project.name}`,
+      description: `Novo projeto criado: ${project.name}`,
       entityName: project.name,
     });
     const enriched = await enrichProject(project);

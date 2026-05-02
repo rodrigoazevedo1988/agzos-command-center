@@ -72,7 +72,7 @@ router.post("/sites", async (req, res) => {
     const [site] = await db.insert(sitesTable).values(body).returning();
     await db.insert(activityTable).values({
       type: "site_added",
-      description: `New site added: ${site.name}`,
+      description: `Novo site adicionado: ${site.name}`,
       entityName: site.name,
     });
     res.status(201).json({ ...site, clientName: null, monthlyVisitors: site.monthlyVisitors ?? 0 });

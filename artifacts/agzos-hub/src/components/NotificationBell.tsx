@@ -105,6 +105,7 @@ export function NotificationBell() {
   const simulationActive = useNotificationsStore((s) => s.simulationActive);
   const setSimulationActive = useNotificationsStore((s) => s.setSimulationActive);
   const injectRealtime = useNotificationsStore((s) => s.injectRealtime);
+  const syncFromApi = useNotificationsStore((s) => s.syncFromApi);
 
   // Close on outside click
   useEffect(() => {
@@ -114,6 +115,13 @@ export function NotificationBell() {
     if (open) document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
   }, [open]);
+
+  // Sync real activity from API on mount + every 60s
+  useEffect(() => {
+    syncFromApi();
+    const t = setInterval(() => syncFromApi(), 60_000);
+    return () => clearInterval(t);
+  }, [syncFromApi]);
 
   // Real-time simulation
   useEffect(() => {

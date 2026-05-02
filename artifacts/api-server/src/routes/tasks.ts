@@ -51,7 +51,7 @@ router.post("/tasks", async (req, res) => {
     if (task.status === "done") {
       await db.insert(activityTable).values({
         type: "task_completed",
-        description: `Task completed: ${task.title}`,
+        description: `Tarefa concluída: ${task.title}`,
         entityName: task.title,
       });
     }
@@ -71,7 +71,7 @@ router.put("/tasks/:id", async (req, res) => {
     if (body.status === "done") {
       await db.insert(activityTable).values({
         type: "task_completed",
-        description: `Task completed: ${task.title}`,
+        description: `Tarefa concluída: ${task.title}`,
         entityName: task.title,
       });
     }

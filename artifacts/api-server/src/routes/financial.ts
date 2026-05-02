@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { db, invoicesTable, clientsTable, projectsTable } from "@workspace/db";
+import { db, invoicesTable, clientsTable, projectsTable, activityTable } from "@workspace/db";
 import { eq, sql, and, gte, inArray } from "drizzle-orm";
 import {
   CreateInvoiceBody,
@@ -122,6 +122,13 @@ router.put("/financial/invoices/:id", async (req, res) => {
       .where(eq(invoicesTable.id, id))
       .returning();
     if (!invoice) return res.status(404).json({ error: "Not found" });
+    if (body.status === "paid") {
+      await db.insert(activityTable).values({
+        type: "invoice_paid",
+        description: `Fatura paga: ${invoice.number}`,
+        entityName: invoice.number,
+      });
+    }
     res.json({ ...invoice, amount: Number(invoice.amount), clientName: null, projectName: null });
   } catch (err) {
     req.log.error(err);

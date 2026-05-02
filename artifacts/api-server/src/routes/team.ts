@@ -40,7 +40,7 @@ router.post("/team", async (req, res) => {
       .returning();
     await db.insert(activityTable).values({
       type: "team_invited",
-      description: `Team member invited: ${member.name}`,
+      description: `Membro convidado: ${member.name}`,
       entityName: member.name,
     });
     res.status(201).json({ ...member, activeProjects: 0 });

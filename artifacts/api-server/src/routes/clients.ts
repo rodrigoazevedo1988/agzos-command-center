@@ -62,7 +62,7 @@ router.post("/clients", async (req, res) => {
     const [client] = await db.insert(clientsTable).values(body).returning();
     await db.insert(activityTable).values({
       type: "client_added",
-      description: `New client added: ${client.name}`,
+      description: `Novo cliente adicionado: ${client.name}`,
       entityName: client.name,
     });
     res.status(201).json({ ...client, monthlyValue: client.monthlyValue ? Number(client.monthlyValue) : null, totalRevenue: Number(client.totalRevenue ?? 0) });
