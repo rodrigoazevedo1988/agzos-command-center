@@ -36,10 +36,7 @@ router.get("/dashboard/kpis", async (req, res) => {
       .select({ total: sql<number>`coalesce(sum(amount::numeric), 0)` })
       .from(invoicesTable)
       .where(
-        and(
-          eq(invoicesTable.status, "paid"),
-          gte(invoicesTable.paidAt, startOfMonth)
-        )
+        sql`status = 'paid' AND (paid_at >= ${startOfMonth.toISOString()} OR created_at >= ${startOfMonth.toISOString()})`
       );
 
     const [overdueRes] = await db
