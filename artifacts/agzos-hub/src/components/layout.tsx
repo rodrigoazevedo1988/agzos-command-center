@@ -9,6 +9,8 @@ import {
   Wrench,
   Menu,
   Bell,
+  BarChart2,
+  Settings,
 } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
@@ -29,6 +31,8 @@ const NAV_ITEMS: { href: string; label: string; icon: any; module: NavModule }[]
   { href: "/team", label: "Equipe", icon: UsersRound, module: "team" },
   { href: "/financial", label: "Financeiro", icon: DollarSign, module: "financial" },
   { href: "/tools", label: "Ferramentas", icon: Wrench, module: "tools" },
+  { href: "/reports", label: "Relatórios", icon: BarChart2, module: "reports" },
+  { href: "/settings", label: "Configurações", icon: Settings, module: "settings" },
 ];
 
 const NOTIF_NAV = { href: "/notifications", label: "Notificações", icon: Bell };
