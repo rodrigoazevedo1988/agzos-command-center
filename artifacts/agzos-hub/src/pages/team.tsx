@@ -36,6 +36,8 @@ const MODULE_LABELS: Record<NavModule, string> = {
   team: "Equipe",
   financial: "Financeiro",
   tools: "Ferramentas",
+  reports: "Relatórios",
+  settings: "Configurações",
 };
 
 const ACTION_LABELS: Record<Action, string> = {

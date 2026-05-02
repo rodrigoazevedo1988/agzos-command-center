@@ -11,6 +11,7 @@ import {
   Bell,
   BarChart2,
   Settings,
+  Search,
 } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
@@ -21,6 +22,7 @@ import type { AuthUser } from "@/store/useAuthStore";
 import { ROLE_LABELS, ROLE_COLORS, NavModule } from "@/lib/permissions";
 import { RoleSwitcher } from "@/components/RoleSwitcher";
 import { NotificationBell } from "@/components/NotificationBell";
+import { CommandPalette } from "@/components/CommandPalette";
 import { useNotificationsStore, selectUnreadCount } from "@/store/useNotificationsStore";
 
 const NAV_ITEMS: { href: string; label: string; icon: any; module: NavModule }[] = [
@@ -185,8 +187,20 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
             </h1>
           </div>
 
-          {/* Desktop: espaço para topbar */}
-          <div className="hidden md:block" />
+          {/* Desktop: Cmd+K hint */}
+          <button
+            onClick={() => {
+              const e = new KeyboardEvent("keydown", { key: "k", metaKey: true, bubbles: true });
+              document.dispatchEvent(e);
+            }}
+            className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-lg border border-border/50 bg-muted/20 hover:bg-muted/40 transition-colors text-muted-foreground text-xs"
+          >
+            <Search className="w-3.5 h-3.5" />
+            <span>Buscar...</span>
+            <kbd className="ml-2 pointer-events-none inline-flex h-4 select-none items-center gap-1 rounded border border-border/60 bg-muted px-1.5 font-mono text-[9px] font-medium opacity-70">
+              ⌘K
+            </kbd>
+          </button>
 
           {/* Topbar right */}
           <div className="flex items-center gap-2">
@@ -199,6 +213,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
           <div className="mx-auto max-w-7xl">{children}</div>
         </main>
       </div>
+      <CommandPalette />
     </div>
   );
 }
