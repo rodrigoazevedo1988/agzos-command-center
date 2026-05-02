@@ -28,14 +28,18 @@ const NAV_ITEMS: { href: string; label: string; icon: any; module: NavModule }[]
   { href: "/tools", label: "Ferramentas", icon: Wrench, module: "tools" },
 ];
 
-export function AppLayout({ children }: { children: React.ReactNode }) {
-  const [location] = useLocation();
-  const [mobileOpen, setMobileOpen] = useState(false);
-  const { user, canAccessModule } = useAuthStore();
-
-  const visibleItems = NAV_ITEMS.filter((item) => canAccessModule(item.module));
-
-  const NavContent = () => (
+function NavContent({
+  visibleItems,
+  location,
+  user,
+  setMobileOpen,
+}: {
+  visibleItems: typeof NAV_ITEMS;
+  location: string;
+  user: ReturnType<typeof useAuthStore>["user"] extends infer U ? U : never;
+  setMobileOpen: (v: boolean) => void;
+}) {
+  return (
     <div className="flex flex-col gap-2 p-4 h-full bg-sidebar border-r border-sidebar-border">
       <div className="px-2 py-4 mb-2">
         <h1 className="text-xl font-bold bg-gradient-to-r from-primary to-purple-400 bg-clip-text text-transparent tracking-tight">
