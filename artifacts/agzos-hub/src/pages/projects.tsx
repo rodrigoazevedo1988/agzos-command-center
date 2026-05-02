@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import {
   useProjectsStore, Task, TaskStatus, Project, KANBAN_COLUMNS, Priority,
+  NewProjectInput, ProjectStatus,
 } from "@/store/useProjectsStore";
 import { useAuthStore } from "@/store/useAuthStore";
 import { Card, CardContent } from "@/components/ui/card";
@@ -11,8 +12,13 @@ import { Progress } from "@/components/ui/progress";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
+import { Label } from "@/components/ui/label";
+import {
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+} from "@/components/ui/select";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle,
+  DialogFooter, DialogDescription,
 } from "@/components/ui/dialog";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import {
@@ -676,6 +682,199 @@ function GanttView() {
   );
 }
 
+// ─── Add Project Dialog ──────────────────────────────────────────────────────
+
+const PROJECT_COLOR_OPTIONS = [
+  "#A855F7", "#EC4899", "#3B82F6", "#10B981",
+  "#F59E0B", "#EF4444", "#06B6D4", "#8B5CF6",
+];
+
+const PRIORITY_OPTIONS: { value: Priority; label: string }[] = [
+  { value: "urgent", label: "Urgente" },
+  { value: "high", label: "Alto" },
+  { value: "medium", label: "Médio" },
+  { value: "low", label: "Baixo" },
+];
+
+const PROJECT_STATUS_OPTIONS: { value: ProjectStatus; label: string }[] = [
+  { value: "planning", label: "Planejamento" },
+  { value: "active", label: "Em Andamento" },
+  { value: "review", label: "Revisão" },
+  { value: "completed", label: "Concluído" },
+  { value: "paused", label: "Pausado" },
+];
+
+const EMPTY_PROJECT: NewProjectInput = {
+  name: "",
+  description: "",
+  clientName: "",
+  status: "planning",
+  priority: "medium",
+  startDate: new Date().toISOString().split("T")[0],
+  dueDate: "",
+  color: "#A855F7",
+};
+
+function AddProjectDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const addProject = useProjectsStore((s) => s.addProject);
+  const [form, setForm] = useState<NewProjectInput>(EMPTY_PROJECT);
+  const [errors, setErrors] = useState<Partial<Record<keyof NewProjectInput, string>>>({});
+
+  function setField<K extends keyof NewProjectInput>(key: K, value: NewProjectInput[K]) {
+    setForm((f) => ({ ...f, [key]: value }));
+    setErrors((e) => ({ ...e, [key]: undefined }));
+  }
+
+  function validate() {
+    const errs: Partial<Record<keyof NewProjectInput, string>> = {};
+    if (!form.name.trim()) errs.name = "Nome é obrigatório.";
+    if (!form.clientName.trim()) errs.clientName = "Cliente é obrigatório.";
+    if (!form.dueDate) errs.dueDate = "Prazo é obrigatório.";
+    setErrors(errs);
+    return Object.keys(errs).length === 0;
+  }
+
+  function handleSubmit() {
+    if (!validate()) return;
+    addProject(form);
+    setForm(EMPTY_PROJECT);
+    setErrors({});
+    onClose();
+  }
+
+  function handleClose() {
+    setForm(EMPTY_PROJECT);
+    setErrors({});
+    onClose();
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={handleClose}>
+      <DialogContent className="max-w-lg bg-card border-border/50">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <Plus className="w-4 h-4 text-primary" />
+            Novo Projeto
+          </DialogTitle>
+          <DialogDescription className="text-muted-foreground text-sm">
+            Preencha os dados do projeto. Campos com * são obrigatórios.
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="grid gap-4 py-1 max-h-[60vh] overflow-y-auto pr-1">
+          <div className="space-y-1.5">
+            <Label className="text-sm">Nome do projeto *</Label>
+            <Input
+              placeholder="Ex: Redesign Site Cliente"
+              value={form.name}
+              onChange={(e) => setField("name", e.target.value)}
+              className={`bg-background/50 border-border/50 ${errors.name ? "border-destructive" : ""}`}
+            />
+            {errors.name && <p className="text-xs text-destructive">{errors.name}</p>}
+          </div>
+
+          <div className="space-y-1.5">
+            <Label className="text-sm">Descrição</Label>
+            <Input
+              placeholder="Descreva o objetivo do projeto..."
+              value={form.description}
+              onChange={(e) => setField("description", e.target.value)}
+              className="bg-background/50 border-border/50"
+            />
+          </div>
+
+          <div className="space-y-1.5">
+            <Label className="text-sm">Cliente *</Label>
+            <Input
+              placeholder="Ex: Empresa Ltda."
+              value={form.clientName}
+              onChange={(e) => setField("clientName", e.target.value)}
+              className={`bg-background/50 border-border/50 ${errors.clientName ? "border-destructive" : ""}`}
+            />
+            {errors.clientName && <p className="text-xs text-destructive">{errors.clientName}</p>}
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <Label className="text-sm">Prioridade</Label>
+              <Select value={form.priority} onValueChange={(v) => setField("priority", v as Priority)}>
+                <SelectTrigger className="bg-background/50 border-border/50">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {PRIORITY_OPTIONS.map((o) => (
+                    <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-1.5">
+              <Label className="text-sm">Status inicial</Label>
+              <Select value={form.status} onValueChange={(v) => setField("status", v as ProjectStatus)}>
+                <SelectTrigger className="bg-background/50 border-border/50">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {PROJECT_STATUS_OPTIONS.map((o) => (
+                    <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-1.5">
+              <Label className="text-sm">Início</Label>
+              <Input
+                type="date"
+                value={form.startDate}
+                onChange={(e) => setField("startDate", e.target.value)}
+                className="bg-background/50 border-border/50"
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <Label className="text-sm">Prazo *</Label>
+              <Input
+                type="date"
+                value={form.dueDate}
+                onChange={(e) => setField("dueDate", e.target.value)}
+                className={`bg-background/50 border-border/50 ${errors.dueDate ? "border-destructive" : ""}`}
+              />
+              {errors.dueDate && <p className="text-xs text-destructive">{errors.dueDate}</p>}
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label className="text-sm">Cor do projeto</Label>
+            <div className="flex gap-2 flex-wrap">
+              {PROJECT_COLOR_OPTIONS.map((c) => (
+                <button
+                  key={c}
+                  type="button"
+                  onClick={() => setField("color", c)}
+                  className={`w-7 h-7 rounded-full transition-all ${form.color === c ? "ring-2 ring-offset-2 ring-offset-card ring-white scale-110" : "hover:scale-105"}`}
+                  style={{ backgroundColor: c }}
+                />
+              ))}
+            </div>
+          </div>
+        </div>
+
+        <DialogFooter className="gap-2 pt-2">
+          <Button variant="outline" className="border-border/50" onClick={handleClose}>
+            Cancelar
+          </Button>
+          <Button onClick={handleSubmit} className="gap-2">
+            <Plus className="w-4 h-4" />
+            Criar Projeto
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 // ─── Stats ───────────────────────────────────────────────────────────────────
 
 function StatCard({ title, value, className = "text-foreground" }: { title: string; value: number; className?: string }) {
@@ -695,6 +894,7 @@ export default function Projects() {
   const { projects, tasks, isOverdue } = useProjectsStore();
   const [activeTask, setActiveTask] = useState<Task | null>(null);
   const [view, setView] = useState<"list" | "kanban" | "gantt">("kanban");
+  const [addOpen, setAddOpen] = useState(false);
 
   const total = projects.length;
   const active = projects.filter((p) => p.status === "active").length;
@@ -709,11 +909,13 @@ export default function Projects() {
           <p className="text-muted-foreground text-sm">Acompanhe projetos, tarefas e prazos da agência.</p>
         </div>
         <PermissionGuard action="projects.create" tooltip="Apenas Admin, Gerente de Conta e Gestor de Tráfego podem criar projetos.">
-          <Button data-testid="btn-add-project" className="gap-2">
+          <Button data-testid="btn-add-project" className="gap-2" onClick={() => setAddOpen(true)}>
             <Plus className="w-4 h-4" /> Novo Projeto
           </Button>
         </PermissionGuard>
       </div>
+
+      <AddProjectDialog open={addOpen} onClose={() => setAddOpen(false)} />
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         <StatCard title="Total de Projetos" value={total} />

@@ -212,12 +212,26 @@ export const KANBAN_COLUMNS: { id: TaskStatus; label: string; color: string }[] 
   { id: "done", label: "Concluído", color: "border-emerald-500/50" },
 ];
 
+export interface NewProjectInput {
+  name: string;
+  description: string;
+  clientName: string;
+  status: ProjectStatus;
+  priority: Priority;
+  startDate: string;
+  dueDate: string;
+  color: string;
+}
+
+const PROJECT_COLORS = ["#A855F7", "#EC4899", "#3B82F6", "#10B981", "#F59E0B", "#EF4444", "#06B6D4", "#8B5CF6"];
+
 interface ProjectsStore {
   projects: Project[];
   tasks: Task[];
   team: TeamMember[];
   activeTaskId: string | null;
 
+  addProject: (input: NewProjectInput) => void;
   setActiveTask: (id: string | null) => void;
   moveTask: (taskId: string, newStatus: TaskStatus) => void;
   reorderTasks: (status: TaskStatus, fromIndex: number, toIndex: number) => void;
@@ -239,6 +253,27 @@ export const useProjectsStore = create<ProjectsStore>()((set, get) => ({
   tasks: MOCK_TASKS,
   team: TEAM,
   activeTaskId: null,
+
+  addProject: (input) =>
+    set((s) => {
+      const usedColors = s.projects.map((p) => p.color);
+      const color = input.color || PROJECT_COLORS.find((c) => !usedColors.includes(c)) || PROJECT_COLORS[0];
+      const newProject: Project = {
+        id: `p-${Date.now()}`,
+        name: input.name,
+        description: input.description,
+        clientId: `c-${Date.now()}`,
+        clientName: input.clientName,
+        status: input.status,
+        priority: input.priority,
+        startDate: input.startDate || new Date().toISOString().split("T")[0],
+        dueDate: input.dueDate,
+        progress: 0,
+        color,
+        teamIds: [],
+      };
+      return { projects: [newProject, ...s.projects] };
+    }),
 
   setActiveTask: (id) => set({ activeTaskId: id }),
 
