@@ -167,6 +167,27 @@ interface SitesFilter {
   platform: SitePlatform | "all";
 }
 
+const PLATFORM_GRADIENTS: Record<SitePlatform, string> = {
+  "Lovable": "from-violet-600 via-purple-700 to-indigo-800",
+  "Replit": "from-orange-500 via-amber-600 to-yellow-700",
+  "WordPress": "from-sky-500 via-blue-600 to-blue-800",
+  "Webflow": "from-sky-400 via-blue-500 to-indigo-600",
+  "Next.js": "from-slate-500 via-slate-600 to-slate-800",
+  "Shopify": "from-emerald-500 via-teal-600 to-cyan-700",
+  "Custom": "from-violet-500 via-purple-600 to-fuchsia-700",
+};
+
+export interface NewSiteInput {
+  name: string;
+  url: string;
+  adminUrl?: string;
+  editUrl?: string;
+  clientName: string;
+  status: SiteStatus;
+  platform: SitePlatform;
+  tags: string[];
+}
+
 interface SitesStore {
   sites: Site[];
   filter: SitesFilter;
@@ -174,6 +195,7 @@ interface SitesStore {
   setStatus: (status: SiteStatus | "all") => void;
   setPlatform: (platform: SitePlatform | "all") => void;
   clearFilters: () => void;
+  addSite: (input: NewSiteInput) => void;
   filteredSites: () => Site[];
   stats: () => { total: number; active: number; development: number; maintenance: number; paused: number };
 }
@@ -186,6 +208,25 @@ export const useSitesStore = create<SitesStore>()((set, get) => ({
   setStatus: (status) => set((s) => ({ filter: { ...s.filter, status } })),
   setPlatform: (platform) => set((s) => ({ filter: { ...s.filter, platform } })),
   clearFilters: () => set({ filter: { search: "", status: "all", platform: "all" } }),
+
+  addSite: (input) => {
+    const newSite: Site = {
+      id: String(Date.now()),
+      name: input.name,
+      url: input.url.startsWith("http") ? input.url : `https://${input.url}`,
+      adminUrl: input.adminUrl || undefined,
+      editUrl: input.editUrl || undefined,
+      clientName: input.clientName,
+      status: input.status,
+      platform: input.platform,
+      gradient: PLATFORM_GRADIENTS[input.platform] ?? "from-violet-600 via-purple-700 to-indigo-800",
+      tags: input.tags,
+      metrics: { visitsToday: 0, conversions: 0, bounceRate: 0 },
+      lastDeployedAt: new Date().toISOString(),
+      deployments: [],
+    };
+    set((s) => ({ sites: [newSite, ...s.sites] }));
+  },
 
   filteredSites: () => {
     const { sites, filter } = get();

@@ -1,15 +1,16 @@
-import { useState, useEffect, useRef, useCallback } from "react";
-import { useSitesStore, Site, SiteStatus, SitePlatform, SiteDeployment } from "@/store/useSitesStore";
+import { useState, useEffect, useRef } from "react";
+import { useSitesStore, Site, SiteStatus, SitePlatform, SiteDeployment, NewSiteInput } from "@/store/useSitesStore";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
-  Search, Plus, ExternalLink, Globe, Activity, Settings,
-  PauseCircle, ChevronDown, ChevronUp, X, Rocket, Code2,
+  Search, Plus, ExternalLink, Globe, Settings,
+  PauseCircle, ChevronDown, X, Rocket, Code2,
   Eye, TrendingUp, Percent, Clock, CheckCircle2, XCircle, Loader2,
-  Filter, LayoutGrid, List, Zap, Tag
+  Filter, LayoutGrid, List, Zap, Tag, Link2
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -24,7 +25,16 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogFooter,
+  DialogDescription,
 } from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { PermissionGuard } from "@/components/PermissionGuard";
 
 const PLATFORMS: (SitePlatform | "all")[] = ["all", "Lovable", "Replit", "WordPress", "Webflow", "Next.js", "Shopify", "Custom"];
@@ -406,6 +416,222 @@ function SiteRow({ site }: { site: Site }) {
   );
 }
 
+const PLATFORM_OPTIONS: SitePlatform[] = ["Lovable", "Replit", "WordPress", "Webflow", "Next.js", "Shopify", "Custom"];
+const STATUS_OPTIONS: { value: SiteStatus; label: string }[] = [
+  { value: "active", label: "Ativo" },
+  { value: "development", label: "Em Desenvolvimento" },
+  { value: "maintenance", label: "Manutenção" },
+  { value: "paused", label: "Pausado" },
+];
+
+const EMPTY_FORM: NewSiteInput = {
+  name: "",
+  url: "",
+  adminUrl: "",
+  editUrl: "",
+  clientName: "",
+  status: "development",
+  platform: "Lovable",
+  tags: [],
+};
+
+function AddSiteDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const addSite = useSitesStore((s) => s.addSite);
+  const [form, setForm] = useState<NewSiteInput>(EMPTY_FORM);
+  const [tagInput, setTagInput] = useState("");
+  const [errors, setErrors] = useState<Partial<Record<keyof NewSiteInput, string>>>({});
+
+  function set<K extends keyof NewSiteInput>(key: K, value: NewSiteInput[K]) {
+    setForm((f) => ({ ...f, [key]: value }));
+    setErrors((e) => ({ ...e, [key]: undefined }));
+  }
+
+  function addTag() {
+    const t = tagInput.trim().toLowerCase();
+    if (t && !form.tags.includes(t)) {
+      setForm((f) => ({ ...f, tags: [...f.tags, t] }));
+    }
+    setTagInput("");
+  }
+
+  function removeTag(tag: string) {
+    setForm((f) => ({ ...f, tags: f.tags.filter((t) => t !== tag) }));
+  }
+
+  function validate() {
+    const errs: Partial<Record<keyof NewSiteInput, string>> = {};
+    if (!form.name.trim()) errs.name = "Nome é obrigatório.";
+    if (!form.url.trim()) errs.url = "URL é obrigatória.";
+    if (!form.clientName.trim()) errs.clientName = "Cliente é obrigatório.";
+    setErrors(errs);
+    return Object.keys(errs).length === 0;
+  }
+
+  function handleSubmit() {
+    if (!validate()) return;
+    addSite(form);
+    setForm(EMPTY_FORM);
+    setTagInput("");
+    setErrors({});
+    onClose();
+  }
+
+  function handleClose() {
+    setForm(EMPTY_FORM);
+    setTagInput("");
+    setErrors({});
+    onClose();
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={handleClose}>
+      <DialogContent className="max-w-lg bg-card border-border/50">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <Plus className="w-4 h-4 text-primary" />
+            Adicionar Novo Site
+          </DialogTitle>
+          <DialogDescription className="text-muted-foreground text-sm">
+            Preencha os dados do site. Campos com * são obrigatórios.
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="grid gap-4 py-2 max-h-[60vh] overflow-y-auto pr-1">
+          <div className="grid grid-cols-2 gap-3">
+            <div className="col-span-2 space-y-1.5">
+              <Label htmlFor="site-name" className="text-sm">Nome do site *</Label>
+              <Input
+                id="site-name"
+                placeholder="Ex: Agzos Agency"
+                value={form.name}
+                onChange={(e) => set("name", e.target.value)}
+                className={`bg-background/50 border-border/50 ${errors.name ? "border-destructive" : ""}`}
+              />
+              {errors.name && <p className="text-xs text-destructive">{errors.name}</p>}
+            </div>
+
+            <div className="col-span-2 space-y-1.5">
+              <Label htmlFor="site-url" className="text-sm">URL do site *</Label>
+              <div className="relative">
+                <Link2 className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
+                <Input
+                  id="site-url"
+                  placeholder="https://meusite.com.br"
+                  value={form.url}
+                  onChange={(e) => set("url", e.target.value)}
+                  className={`pl-8 bg-background/50 border-border/50 ${errors.url ? "border-destructive" : ""}`}
+                />
+              </div>
+              {errors.url && <p className="text-xs text-destructive">{errors.url}</p>}
+            </div>
+
+            <div className="col-span-2 space-y-1.5">
+              <Label htmlFor="site-client" className="text-sm">Cliente *</Label>
+              <Input
+                id="site-client"
+                placeholder="Ex: Empresa Ltda."
+                value={form.clientName}
+                onChange={(e) => set("clientName", e.target.value)}
+                className={`bg-background/50 border-border/50 ${errors.clientName ? "border-destructive" : ""}`}
+              />
+              {errors.clientName && <p className="text-xs text-destructive">{errors.clientName}</p>}
+            </div>
+
+            <div className="space-y-1.5">
+              <Label className="text-sm">Plataforma</Label>
+              <Select value={form.platform} onValueChange={(v) => set("platform", v as SitePlatform)}>
+                <SelectTrigger className="bg-background/50 border-border/50">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {PLATFORM_OPTIONS.map((p) => (
+                    <SelectItem key={p} value={p}>{p}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-1.5">
+              <Label className="text-sm">Status inicial</Label>
+              <Select value={form.status} onValueChange={(v) => set("status", v as SiteStatus)}>
+                <SelectTrigger className="bg-background/50 border-border/50">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {STATUS_OPTIONS.map((s) => (
+                    <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-1.5">
+              <Label htmlFor="site-admin" className="text-sm">URL do Admin</Label>
+              <Input
+                id="site-admin"
+                placeholder="https://site.com/admin"
+                value={form.adminUrl}
+                onChange={(e) => set("adminUrl", e.target.value)}
+                className="bg-background/50 border-border/50"
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <Label htmlFor="site-edit" className="text-sm">URL do Editor</Label>
+              <Input
+                id="site-edit"
+                placeholder="https://lovable.dev/..."
+                value={form.editUrl}
+                onChange={(e) => set("editUrl", e.target.value)}
+                className="bg-background/50 border-border/50"
+              />
+            </div>
+
+            <div className="col-span-2 space-y-1.5">
+              <Label className="text-sm">Tags</Label>
+              <div className="flex gap-2">
+                <Input
+                  placeholder="Ex: landing, e-commerce..."
+                  value={tagInput}
+                  onChange={(e) => setTagInput(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addTag(); } }}
+                  className="bg-background/50 border-border/50 flex-1"
+                />
+                <Button type="button" variant="outline" size="sm" onClick={addTag} className="border-border/50 shrink-0">
+                  Adicionar
+                </Button>
+              </div>
+              {form.tags.length > 0 && (
+                <div className="flex flex-wrap gap-1.5 mt-1.5">
+                  {form.tags.map((tag) => (
+                    <span key={tag} className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20">
+                      <Tag className="w-2.5 h-2.5" />
+                      {tag}
+                      <button onClick={() => removeTag(tag)} className="hover:text-destructive transition-colors">
+                        <X className="w-2.5 h-2.5" />
+                      </button>
+                    </span>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        <DialogFooter className="gap-2 pt-2">
+          <Button variant="outline" className="border-border/50" onClick={handleClose}>
+            Cancelar
+          </Button>
+          <Button onClick={handleSubmit} className="gap-2">
+            <Plus className="w-4 h-4" />
+            Adicionar Site
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 function StatCard({ title, value, className = "text-foreground" }: { title: string; value: number; className?: string }) {
   const count = useCountUp(value);
   return (
@@ -422,6 +648,7 @@ export default function Sites() {
   const { filter, setSearch, setStatus, setPlatform, clearFilters, filteredSites, stats } = useSitesStore();
   const [rawSearch, setRawSearch] = useState(filter.search);
   const [view, setView] = useState<"grid" | "list">("grid");
+  const [addOpen, setAddOpen] = useState(false);
   const debouncedSearch = useDebounce(rawSearch, 300);
 
   useEffect(() => {
@@ -442,11 +669,13 @@ export default function Sites() {
           <p className="text-muted-foreground text-sm">Gerencie todos os sites e aplicações dos clientes.</p>
         </div>
         <PermissionGuard action="sites.create" tooltip="Apenas Admin, Gerente de Conta e Dev podem adicionar sites.">
-          <Button data-testid="btn-add-site" className="gap-2">
+          <Button data-testid="btn-add-site" className="gap-2" onClick={() => setAddOpen(true)}>
             <Plus className="w-4 h-4" /> Adicionar Site
           </Button>
         </PermissionGuard>
       </div>
+
+      <AddSiteDialog open={addOpen} onClose={() => setAddOpen(false)} />
 
       <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
         <StatCard title="Total" value={s.total} />
