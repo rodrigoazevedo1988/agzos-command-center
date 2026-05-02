@@ -3,20 +3,38 @@ info:
   # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: Agzos Hub internal management system API
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: dashboard
+    description: Dashboard KPIs and summaries
+  - name: sites
+    description: Client site management
+  - name: projects
+    description: Project and campaign management
+  - name: tasks
+    description: Task management
+  - name: clients
+    description: CRM and client management
+  - name: team
+    description: Team members and RBAC
+  - name: financial
+    description: Financial management
+  - name: tools
+    description: Tools and resource management
+  - name: reports
+    description: Reports and analytics
+
 paths:
   /healthz:
     get:
       operationId: healthCheck
       tags: [health]
       summary: Health check
-      description: Returns server health status
       responses:
         "200":
           description: Healthy
@@ -24,6 +42,715 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  # Dashboard
+  /dashboard/kpis:
+    get:
+      operationId: getDashboardKpis
+      tags: [dashboard]
+      summary: Get dashboard KPIs
+      responses:
+        "200":
+          description: Dashboard KPIs
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DashboardKpis"
+
+  /dashboard/revenue-chart:
+    get:
+      operationId: getRevenueChart
+      tags: [dashboard]
+      summary: Get revenue vs expense chart data
+      parameters:
+        - name: months
+          in: query
+          schema:
+            type: integer
+            default: 6
+      responses:
+        "200":
+          description: Revenue chart data
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/RevenueChartPoint"
+
+  /dashboard/recent-activity:
+    get:
+      operationId: getRecentActivity
+      tags: [dashboard]
+      summary: Get recent activity feed
+      responses:
+        "200":
+          description: Recent activity
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ActivityItem"
+
+  # Sites
+  /sites:
+    get:
+      operationId: listSites
+      tags: [sites]
+      summary: List all sites
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [active, development, maintenance, paused]
+        - name: search
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of sites
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Site"
+    post:
+      operationId: createSite
+      tags: [sites]
+      summary: Create a new site
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateSiteBody"
+      responses:
+        "201":
+          description: Created site
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Site"
+
+  /sites/{id}:
+    get:
+      operationId: getSite
+      tags: [sites]
+      summary: Get site by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Site
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Site"
+    put:
+      operationId: updateSite
+      tags: [sites]
+      summary: Update site
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateSiteBody"
+      responses:
+        "200":
+          description: Updated site
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Site"
+    delete:
+      operationId: deleteSite
+      tags: [sites]
+      summary: Delete site
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  /sites/stats:
+    get:
+      operationId: getSiteStats
+      tags: [sites]
+      summary: Get site status breakdown counts
+      responses:
+        "200":
+          description: Site stats
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SiteStats"
+
+  # Projects
+  /projects:
+    get:
+      operationId: listProjects
+      tags: [projects]
+      summary: List all projects
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [planning, active, review, completed, paused, cancelled]
+        - name: clientId
+          in: query
+          schema:
+            type: integer
+        - name: search
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of projects
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Project"
+    post:
+      operationId: createProject
+      tags: [projects]
+      summary: Create a new project
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateProjectBody"
+      responses:
+        "201":
+          description: Created project
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Project"
+
+  /projects/{id}:
+    get:
+      operationId: getProject
+      tags: [projects]
+      summary: Get project by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Project
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Project"
+    put:
+      operationId: updateProject
+      tags: [projects]
+      summary: Update project
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateProjectBody"
+      responses:
+        "200":
+          description: Updated project
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Project"
+    delete:
+      operationId: deleteProject
+      tags: [projects]
+      summary: Delete project
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  /projects/summary:
+    get:
+      operationId: getProjectsSummary
+      tags: [projects]
+      summary: Get projects summary by status
+      responses:
+        "200":
+          description: Projects summary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProjectsSummary"
+
+  # Tasks
+  /tasks:
+    get:
+      operationId: listTasks
+      tags: [tasks]
+      summary: List tasks
+      parameters:
+        - name: projectId
+          in: query
+          schema:
+            type: integer
+        - name: assigneeId
+          in: query
+          schema:
+            type: integer
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [todo, in_progress, review, done]
+      responses:
+        "200":
+          description: List of tasks
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Task"
+    post:
+      operationId: createTask
+      tags: [tasks]
+      summary: Create a task
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateTaskBody"
+      responses:
+        "201":
+          description: Created task
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Task"
+
+  /tasks/{id}:
+    put:
+      operationId: updateTask
+      tags: [tasks]
+      summary: Update task
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateTaskBody"
+      responses:
+        "200":
+          description: Updated task
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Task"
+    delete:
+      operationId: deleteTask
+      tags: [tasks]
+      summary: Delete task
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  # Clients
+  /clients:
+    get:
+      operationId: listClients
+      tags: [clients]
+      summary: List all clients
+      parameters:
+        - name: stage
+          in: query
+          schema:
+            type: string
+            enum: [lead, proposal, contract, active, churned]
+        - name: search
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of clients
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Client"
+    post:
+      operationId: createClient
+      tags: [clients]
+      summary: Create a new client
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateClientBody"
+      responses:
+        "201":
+          description: Created client
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Client"
+
+  /clients/{id}:
+    get:
+      operationId: getClient
+      tags: [clients]
+      summary: Get client by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Client
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Client"
+    put:
+      operationId: updateClient
+      tags: [clients]
+      summary: Update client
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateClientBody"
+      responses:
+        "200":
+          description: Updated client
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Client"
+    delete:
+      operationId: deleteClient
+      tags: [clients]
+      summary: Delete client
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  /clients/funnel:
+    get:
+      operationId: getClientFunnel
+      tags: [clients]
+      summary: Get client pipeline funnel counts
+      responses:
+        "200":
+          description: Client funnel
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ClientFunnel"
+
+  # Team
+  /team:
+    get:
+      operationId: listTeamMembers
+      tags: [team]
+      summary: List team members
+      responses:
+        "200":
+          description: List of team members
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/TeamMember"
+    post:
+      operationId: createTeamMember
+      tags: [team]
+      summary: Invite a team member
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateTeamMemberBody"
+      responses:
+        "201":
+          description: Created team member
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TeamMember"
+
+  /team/{id}:
+    put:
+      operationId: updateTeamMember
+      tags: [team]
+      summary: Update team member
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateTeamMemberBody"
+      responses:
+        "200":
+          description: Updated team member
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TeamMember"
+    delete:
+      operationId: deleteTeamMember
+      tags: [team]
+      summary: Remove team member
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  # Financial
+  /financial/invoices:
+    get:
+      operationId: listInvoices
+      tags: [financial]
+      summary: List invoices
+      parameters:
+        - name: clientId
+          in: query
+          schema:
+            type: integer
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [draft, sent, paid, overdue, cancelled]
+      responses:
+        "200":
+          description: List of invoices
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Invoice"
+    post:
+      operationId: createInvoice
+      tags: [financial]
+      summary: Create an invoice
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateInvoiceBody"
+      responses:
+        "201":
+          description: Created invoice
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Invoice"
+
+  /financial/invoices/{id}:
+    put:
+      operationId: updateInvoice
+      tags: [financial]
+      summary: Update invoice
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateInvoiceBody"
+      responses:
+        "200":
+          description: Updated invoice
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Invoice"
+    delete:
+      operationId: deleteInvoice
+      tags: [financial]
+      summary: Delete invoice
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  /financial/summary:
+    get:
+      operationId: getFinancialSummary
+      tags: [financial]
+      summary: Get financial summary for current month
+      responses:
+        "200":
+          description: Financial summary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FinancialSummary"
+
+  # Tools
+  /tools:
+    get:
+      operationId: listTools
+      tags: [tools]
+      summary: List all tools and accounts
+      responses:
+        "200":
+          description: List of tools
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Tool"
+    post:
+      operationId: createTool
+      tags: [tools]
+      summary: Add a tool/account
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateToolBody"
+      responses:
+        "201":
+          description: Created tool
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Tool"
+
+  /tools/{id}:
+    put:
+      operationId: updateTool
+      tags: [tools]
+      summary: Update tool
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateToolBody"
+      responses:
+        "200":
+          description: Updated tool
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Tool"
+    delete:
+      operationId: deleteTool
+      tags: [tools]
+      summary: Delete tool
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
 components:
   schemas:
     HealthStatus:
@@ -31,6 +758,623 @@ components:
       properties:
         status:
           type: string
-      required:
-        - status
+      required: [status]
 
+    DashboardKpis:
+      type: object
+      properties:
+        monthlyRevenue:
+          type: number
+        averageRoi:
+          type: number
+        activeProjects:
+          type: integer
+        managedSites:
+          type: integer
+        averageTicket:
+          type: number
+        overdueProjects:
+          type: integer
+        newLeadsThisMonth:
+          type: integer
+        teamMembers:
+          type: integer
+      required: [monthlyRevenue, averageRoi, activeProjects, managedSites, averageTicket, overdueProjects, newLeadsThisMonth, teamMembers]
+
+    RevenueChartPoint:
+      type: object
+      properties:
+        month:
+          type: string
+        revenue:
+          type: number
+        expenses:
+          type: number
+        profit:
+          type: number
+      required: [month, revenue, expenses, profit]
+
+    ActivityItem:
+      type: object
+      properties:
+        id:
+          type: integer
+        type:
+          type: string
+          enum: [project_created, site_added, invoice_paid, client_added, task_completed, team_invited]
+        description:
+          type: string
+        entityName:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+      required: [id, type, description, entityName, createdAt]
+
+    Site:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        url:
+          type: string
+        status:
+          type: string
+          enum: [active, development, maintenance, paused]
+        clientId:
+          type: integer
+        clientName:
+          type: string
+        adminUrl:
+          type: string
+        platform:
+          type: string
+        lastDeployment:
+          type: string
+          format: date-time
+        monthlyVisitors:
+          type: integer
+        notes:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+      required: [id, name, url, status, createdAt]
+
+    CreateSiteBody:
+      type: object
+      properties:
+        name:
+          type: string
+        url:
+          type: string
+        status:
+          type: string
+          enum: [active, development, maintenance, paused]
+        clientId:
+          type: integer
+        adminUrl:
+          type: string
+        platform:
+          type: string
+        notes:
+          type: string
+      required: [name, url, status]
+
+    UpdateSiteBody:
+      type: object
+      properties:
+        name:
+          type: string
+        url:
+          type: string
+        status:
+          type: string
+          enum: [active, development, maintenance, paused]
+        clientId:
+          type: integer
+        adminUrl:
+          type: string
+        platform:
+          type: string
+        notes:
+          type: string
+
+    SiteStats:
+      type: object
+      properties:
+        total:
+          type: integer
+        active:
+          type: integer
+        development:
+          type: integer
+        maintenance:
+          type: integer
+        paused:
+          type: integer
+      required: [total, active, development, maintenance, paused]
+
+    Project:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        description:
+          type: string
+        status:
+          type: string
+          enum: [planning, active, review, completed, paused, cancelled]
+        clientId:
+          type: integer
+        clientName:
+          type: string
+        assigneeId:
+          type: integer
+        assigneeName:
+          type: string
+        budget:
+          type: number
+        startDate:
+          type: string
+          format: date
+        dueDate:
+          type: string
+          format: date
+        completedAt:
+          type: string
+          format: date-time
+        progress:
+          type: integer
+          minimum: 0
+          maximum: 100
+        priority:
+          type: string
+          enum: [low, medium, high, urgent]
+        createdAt:
+          type: string
+          format: date-time
+      required: [id, name, status, priority, progress, createdAt]
+
+    CreateProjectBody:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        status:
+          type: string
+          enum: [planning, active, review, completed, paused, cancelled]
+        clientId:
+          type: integer
+        assigneeId:
+          type: integer
+        budget:
+          type: number
+        startDate:
+          type: string
+          format: date
+        dueDate:
+          type: string
+          format: date
+        priority:
+          type: string
+          enum: [low, medium, high, urgent]
+      required: [name, status, priority]
+
+    UpdateProjectBody:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        status:
+          type: string
+          enum: [planning, active, review, completed, paused, cancelled]
+        clientId:
+          type: integer
+        assigneeId:
+          type: integer
+        budget:
+          type: number
+        startDate:
+          type: string
+          format: date
+        dueDate:
+          type: string
+          format: date
+        priority:
+          type: string
+          enum: [low, medium, high, urgent]
+        progress:
+          type: integer
+
+    ProjectsSummary:
+      type: object
+      properties:
+        total:
+          type: integer
+        byStatus:
+          type: object
+          additionalProperties:
+            type: integer
+        overdue:
+          type: integer
+        completedThisMonth:
+          type: integer
+      required: [total, byStatus, overdue, completedThisMonth]
+
+    Task:
+      type: object
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        description:
+          type: string
+        status:
+          type: string
+          enum: [todo, in_progress, review, done]
+        projectId:
+          type: integer
+        projectName:
+          type: string
+        assigneeId:
+          type: integer
+        assigneeName:
+          type: string
+        priority:
+          type: string
+          enum: [low, medium, high, urgent]
+        dueDate:
+          type: string
+          format: date
+        createdAt:
+          type: string
+          format: date-time
+      required: [id, title, status, priority, createdAt]
+
+    CreateTaskBody:
+      type: object
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        status:
+          type: string
+          enum: [todo, in_progress, review, done]
+        projectId:
+          type: integer
+        assigneeId:
+          type: integer
+        priority:
+          type: string
+          enum: [low, medium, high, urgent]
+        dueDate:
+          type: string
+          format: date
+      required: [title, status, priority]
+
+    UpdateTaskBody:
+      type: object
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        status:
+          type: string
+          enum: [todo, in_progress, review, done]
+        projectId:
+          type: integer
+        assigneeId:
+          type: integer
+        priority:
+          type: string
+          enum: [low, medium, high, urgent]
+        dueDate:
+          type: string
+          format: date
+
+    Client:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        companyName:
+          type: string
+        email:
+          type: string
+        phone:
+          type: string
+        stage:
+          type: string
+          enum: [lead, proposal, contract, active, churned]
+        monthlyValue:
+          type: number
+        totalRevenue:
+          type: number
+        industry:
+          type: string
+        notes:
+          type: string
+        avatarUrl:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+      required: [id, name, email, stage, createdAt]
+
+    CreateClientBody:
+      type: object
+      properties:
+        name:
+          type: string
+        companyName:
+          type: string
+        email:
+          type: string
+        phone:
+          type: string
+        stage:
+          type: string
+          enum: [lead, proposal, contract, active, churned]
+        monthlyValue:
+          type: number
+        industry:
+          type: string
+        notes:
+          type: string
+      required: [name, email, stage]
+
+    UpdateClientBody:
+      type: object
+      properties:
+        name:
+          type: string
+        companyName:
+          type: string
+        email:
+          type: string
+        phone:
+          type: string
+        stage:
+          type: string
+          enum: [lead, proposal, contract, active, churned]
+        monthlyValue:
+          type: number
+        industry:
+          type: string
+        notes:
+          type: string
+
+    ClientFunnel:
+      type: object
+      properties:
+        lead:
+          type: integer
+        proposal:
+          type: integer
+        contract:
+          type: integer
+        active:
+          type: integer
+        churned:
+          type: integer
+        totalPipelineValue:
+          type: number
+      required: [lead, proposal, contract, active, churned, totalPipelineValue]
+
+    TeamMember:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        email:
+          type: string
+        role:
+          type: string
+          enum: [admin, account_manager, traffic_manager, designer, developer, financial, client]
+        status:
+          type: string
+          enum: [active, invited, inactive]
+        avatarUrl:
+          type: string
+        activeProjects:
+          type: integer
+        joinedAt:
+          type: string
+          format: date-time
+      required: [id, name, email, role, status]
+
+    CreateTeamMemberBody:
+      type: object
+      properties:
+        name:
+          type: string
+        email:
+          type: string
+        role:
+          type: string
+          enum: [admin, account_manager, traffic_manager, designer, developer, financial, client]
+      required: [name, email, role]
+
+    UpdateTeamMemberBody:
+      type: object
+      properties:
+        name:
+          type: string
+        role:
+          type: string
+          enum: [admin, account_manager, traffic_manager, designer, developer, financial, client]
+        status:
+          type: string
+          enum: [active, invited, inactive]
+
+    Invoice:
+      type: object
+      properties:
+        id:
+          type: integer
+        number:
+          type: string
+        clientId:
+          type: integer
+        clientName:
+          type: string
+        projectId:
+          type: integer
+        projectName:
+          type: string
+        amount:
+          type: number
+        status:
+          type: string
+          enum: [draft, sent, paid, overdue, cancelled]
+        dueDate:
+          type: string
+          format: date
+        paidAt:
+          type: string
+          format: date-time
+        description:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+      required: [id, number, amount, status, createdAt]
+
+    CreateInvoiceBody:
+      type: object
+      properties:
+        clientId:
+          type: integer
+        projectId:
+          type: integer
+        amount:
+          type: number
+        status:
+          type: string
+          enum: [draft, sent, paid, overdue, cancelled]
+        dueDate:
+          type: string
+          format: date
+        description:
+          type: string
+      required: [clientId, amount, status]
+
+    UpdateInvoiceBody:
+      type: object
+      properties:
+        clientId:
+          type: integer
+        projectId:
+          type: integer
+        amount:
+          type: number
+        status:
+          type: string
+          enum: [draft, sent, paid, overdue, cancelled]
+        dueDate:
+          type: string
+          format: date
+        description:
+          type: string
+
+    FinancialSummary:
+      type: object
+      properties:
+        totalRevenue:
+          type: number
+        totalExpenses:
+          type: number
+        profit:
+          type: number
+        pendingInvoices:
+          type: number
+        overdueInvoices:
+          type: number
+        paidThisMonth:
+          type: number
+        invoiceCount:
+          type: integer
+      required: [totalRevenue, totalExpenses, profit, pendingInvoices, overdueInvoices, paidThisMonth, invoiceCount]
+
+    Tool:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        category:
+          type: string
+          enum: [advertising, analytics, design, development, communication, finance, other]
+        url:
+          type: string
+        loginEmail:
+          type: string
+        monthlyCost:
+          type: number
+        status:
+          type: string
+          enum: [active, inactive]
+        notes:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+      required: [id, name, category, status, createdAt]
+
+    CreateToolBody:
+      type: object
+      properties:
+        name:
+          type: string
+        category:
+          type: string
+          enum: [advertising, analytics, design, development, communication, finance, other]
+        url:
+          type: string
+        loginEmail:
+          type: string
+        monthlyCost:
+          type: number
+        status:
+          type: string
+          enum: [active, inactive]
+        notes:
+          type: string
+      required: [name, category, status]
+
+    UpdateToolBody:
+      type: object
+      properties:
+        name:
+          type: string
+        category:
+          type: string
+          enum: [advertising, analytics, design, development, communication, finance, other]
+        url:
+          type: string
+        loginEmail:
+          type: string
+        monthlyCost:
+          type: number
+        status:
+          type: string
+          enum: [active, inactive]
+        notes:
+          type: string
