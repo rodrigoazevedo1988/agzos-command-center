@@ -3,7 +3,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { UserPlus, Mail, Briefcase, Calendar } from "lucide-react";
+import { UserPlus, Mail, Briefcase } from "lucide-react";
 
 export default function Team() {
   const { data: team, isLoading } = useListTeamMembers();
@@ -18,19 +18,37 @@ export default function Team() {
     }
   };
 
-  const formatRole = (role: string) => {
-    return role.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase());
+  const translateRole = (role: string) => {
+    switch (role) {
+      case "admin": return "Administrador";
+      case "account_manager": return "Gerente de Conta";
+      case "traffic_manager": return "Gestor de Tráfego";
+      case "designer": return "Designer";
+      case "developer": return "Desenvolvedor";
+      case "financial": return "Financeiro";
+      case "client": return "Cliente";
+      default: return role;
+    }
+  };
+
+  const translateStatus = (status: string) => {
+    switch (status) {
+      case "active": return "Ativo";
+      case "invited": return "Convidado";
+      case "inactive": return "Inativo";
+      default: return status;
+    }
   };
 
   return (
     <div className="flex flex-col gap-6 animate-in fade-in duration-500">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Team Directory</h1>
-          <p className="text-muted-foreground text-sm">Manage agency members, roles, and access.</p>
+          <h1 className="text-3xl font-bold tracking-tight">Equipe</h1>
+          <p className="text-muted-foreground text-sm">Gerencie membros, cargos e acessos da agência.</p>
         </div>
         <Button data-testid="btn-invite-team" className="gap-2">
-          <UserPlus className="w-4 h-4" /> Invite Member
+          <UserPlus className="w-4 h-4" /> Convidar Membro
         </Button>
       </div>
 
@@ -39,7 +57,7 @@ export default function Team() {
           Array.from({ length: 8 }).map((_, i) => <Skeleton key={i} className="h-64 w-full rounded-xl" />)
         ) : team?.length === 0 ? (
           <div className="col-span-full py-12 text-center text-muted-foreground">
-            <p>No team members found.</p>
+            <p>Nenhum membro encontrado.</p>
           </div>
         ) : (
           team?.map((member) => (
@@ -57,8 +75,8 @@ export default function Team() {
                 </div>
                 
                 <h3 className="font-semibold text-lg leading-tight">{member.name}</h3>
-                <Badge variant="outline" className={`mt-2 mb-4 capitalize px-2.5 py-0.5 text-[10px] tracking-wider font-semibold ${getRoleColor(member.role)}`}>
-                  {formatRole(member.role)}
+                <Badge variant="outline" className={`mt-2 mb-4 px-2.5 py-0.5 text-[10px] tracking-wider font-semibold ${getRoleColor(member.role)}`}>
+                  {translateRole(member.role)}
                 </Badge>
                 
                 <div className="w-full space-y-2.5 text-sm text-muted-foreground mt-auto bg-muted/10 p-3 rounded-lg border border-border/30">
@@ -67,8 +85,14 @@ export default function Team() {
                     <span className="truncate text-xs">{member.email}</span>
                   </div>
                   <div className="flex items-center justify-between px-1">
-                    <span className="flex items-center gap-1.5 text-xs"><Briefcase className="w-3.5 h-3.5 opacity-70" /> Projects</span>
+                    <span className="flex items-center gap-1.5 text-xs"><Briefcase className="w-3.5 h-3.5 opacity-70" /> Projetos</span>
                     <span className="font-medium text-foreground">{member.activeProjects || 0}</span>
+                  </div>
+                  <div className="flex items-center justify-between px-1">
+                    <span className="text-xs">Status</span>
+                    <span className={`text-xs font-medium ${member.status === 'active' ? 'text-emerald-500' : member.status === 'invited' ? 'text-yellow-500' : 'text-muted-foreground'}`}>
+                      {translateStatus(member.status)}
+                    </span>
                   </div>
                 </div>
               </CardContent>

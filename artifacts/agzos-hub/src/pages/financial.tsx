@@ -19,15 +19,26 @@ export default function Financial() {
     }
   };
 
+  const getStatusLabel = (status: string) => {
+    switch (status) {
+      case "paid": return "Pago";
+      case "sent": return "Enviado";
+      case "overdue": return "Vencido";
+      case "draft": return "Rascunho";
+      case "cancelled": return "Cancelado";
+      default: return status;
+    }
+  };
+
   return (
     <div className="flex flex-col gap-6 animate-in fade-in duration-500">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Financial Overview</h1>
-          <p className="text-muted-foreground text-sm">Manage invoices, revenue, and agency expenses.</p>
+          <h1 className="text-3xl font-bold tracking-tight">Financeiro</h1>
+          <p className="text-muted-foreground text-sm">Gerencie faturas, receitas e despesas da agência.</p>
         </div>
         <Button data-testid="btn-create-invoice" className="gap-2">
-          <Plus className="w-4 h-4" /> Create Invoice
+          <Plus className="w-4 h-4" /> Criar Fatura
         </Button>
       </div>
 
@@ -38,8 +49,8 @@ export default function Financial() {
               <DollarSign className="w-6 h-6" />
             </div>
             <div>
-              <p className="text-sm font-medium text-muted-foreground">Total Revenue (YTD)</p>
-              {summaryLoading ? <Skeleton className="h-8 w-32 mt-1" /> : <p className="text-3xl font-bold tracking-tight">${summary?.totalRevenue?.toLocaleString() || "0"}</p>}
+              <p className="text-sm font-medium text-muted-foreground">Receita Total (Período)</p>
+              {summaryLoading ? <Skeleton className="h-8 w-32 mt-1" /> : <p className="text-3xl font-bold tracking-tight">R$ {summary?.totalRevenue?.toLocaleString("pt-BR") || "0"}</p>}
             </div>
           </CardContent>
         </Card>
@@ -50,8 +61,8 @@ export default function Financial() {
               <TrendingUp className="w-6 h-6" />
             </div>
             <div>
-              <p className="text-sm font-medium text-muted-foreground">Net Profit (YTD)</p>
-              {summaryLoading ? <Skeleton className="h-8 w-32 mt-1" /> : <p className="text-3xl font-bold tracking-tight text-emerald-500">${summary?.profit?.toLocaleString() || "0"}</p>}
+              <p className="text-sm font-medium text-muted-foreground">Lucro Líquido (Período)</p>
+              {summaryLoading ? <Skeleton className="h-8 w-32 mt-1" /> : <p className="text-3xl font-bold tracking-tight text-emerald-500">R$ {summary?.profit?.toLocaleString("pt-BR") || "0"}</p>}
             </div>
           </CardContent>
         </Card>
@@ -62,8 +73,8 @@ export default function Financial() {
               <AlertCircle className="w-6 h-6" />
             </div>
             <div>
-              <p className="text-sm font-medium text-muted-foreground">Overdue Invoices</p>
-              {summaryLoading ? <Skeleton className="h-8 w-16 mt-1" /> : <p className="text-3xl font-bold tracking-tight text-destructive">{summary?.overdueInvoices || "0"}</p>}
+              <p className="text-sm font-medium text-muted-foreground">Faturas Vencidas</p>
+              {summaryLoading ? <Skeleton className="h-8 w-16 mt-1" /> : <p className="text-3xl font-bold tracking-tight text-destructive">R$ {summary?.overdueInvoices?.toLocaleString("pt-BR") || "0"}</p>}
             </div>
           </CardContent>
         </Card>
@@ -71,17 +82,17 @@ export default function Financial() {
 
       <Card className="border-border/50 bg-card/50 backdrop-blur-xl">
         <CardHeader className="border-b border-border/50">
-          <CardTitle className="text-lg">Recent Invoices</CardTitle>
+          <CardTitle className="text-lg">Faturas Recentes</CardTitle>
         </CardHeader>
         <div className="p-0 overflow-x-auto">
           <table className="w-full text-sm text-left">
             <thead className="text-xs text-muted-foreground bg-muted/20 uppercase border-b border-border/50">
               <tr>
-                <th className="px-6 py-4 font-medium">Invoice</th>
-                <th className="px-6 py-4 font-medium">Client / Project</th>
-                <th className="px-6 py-4 font-medium">Amount</th>
+                <th className="px-6 py-4 font-medium">Fatura</th>
+                <th className="px-6 py-4 font-medium">Cliente / Projeto</th>
+                <th className="px-6 py-4 font-medium">Valor</th>
                 <th className="px-6 py-4 font-medium">Status</th>
-                <th className="px-6 py-4 font-medium text-right">Due Date</th>
+                <th className="px-6 py-4 font-medium text-right">Vencimento</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border/50">
@@ -99,7 +110,7 @@ export default function Financial() {
                 <tr>
                   <td colSpan={5} className="px-6 py-12 text-center text-muted-foreground">
                     <FileText className="w-12 h-12 mx-auto mb-3 opacity-20" />
-                    <p>No invoices found.</p>
+                    <p>Nenhuma fatura encontrada.</p>
                   </td>
                 </tr>
               ) : (
@@ -110,15 +121,15 @@ export default function Financial() {
                       <div className="font-medium">{invoice.clientName || '—'}</div>
                       {invoice.projectName && <div className="text-xs text-muted-foreground mt-0.5">{invoice.projectName}</div>}
                     </td>
-                    <td className="px-6 py-4 font-semibold">${invoice.amount.toLocaleString()}</td>
+                    <td className="px-6 py-4 font-semibold">R$ {invoice.amount.toLocaleString("pt-BR")}</td>
                     <td className="px-6 py-4">
-                      <Badge variant="outline" className={`capitalize px-2.5 py-0.5 text-xs ${getStatusColor(invoice.status)}`}>
-                        {invoice.status}
+                      <Badge variant="outline" className={`px-2.5 py-0.5 text-xs ${getStatusColor(invoice.status)}`}>
+                        {getStatusLabel(invoice.status)}
                       </Badge>
                     </td>
                     <td className="px-6 py-4 text-right text-muted-foreground flex items-center justify-end gap-1.5">
                       <Clock className="w-3.5 h-3.5 opacity-50" />
-                      {invoice.dueDate ? new Date(invoice.dueDate).toLocaleDateString() : '—'}
+                      {invoice.dueDate ? new Date(invoice.dueDate).toLocaleDateString("pt-BR") : '—'}
                     </td>
                   </tr>
                 ))

@@ -16,31 +16,31 @@ export default function Dashboard() {
   return (
     <div className="flex flex-col gap-8 pb-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight mb-1">Command Center</h1>
-        <p className="text-muted-foreground text-sm">Agency overview and quick metrics.</p>
+        <h1 className="text-3xl font-bold tracking-tight mb-1">Central de Comando</h1>
+        <p className="text-muted-foreground text-sm">Visão geral da agência e métricas em tempo real.</p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <KpiCard 
-          title="Monthly Revenue" 
-          value={kpis?.monthlyRevenue ? `$${kpis.monthlyRevenue.toLocaleString()}` : "$0"} 
+          title="Receita do Mês" 
+          value={kpis?.monthlyRevenue ? `R$ ${kpis.monthlyRevenue.toLocaleString("pt-BR")}` : "R$ 0"} 
           icon={DollarSign}
           loading={kpisLoading}
         />
         <KpiCard 
-          title="Active Projects" 
+          title="Projetos Ativos" 
           value={kpis?.activeProjects?.toString() || "0"} 
           icon={Briefcase}
           loading={kpisLoading}
         />
         <KpiCard 
-          title="Managed Sites" 
+          title="Sites Gerenciados" 
           value={kpis?.managedSites?.toString() || "0"} 
           icon={Globe}
           loading={kpisLoading}
         />
         <KpiCard 
-          title="Overdue Projects" 
+          title="Projetos Atrasados" 
           value={kpis?.overdueProjects?.toString() || "0"} 
           icon={AlertTriangle}
           loading={kpisLoading}
@@ -53,7 +53,7 @@ export default function Dashboard() {
           <CardHeader>
             <CardTitle className="text-base font-semibold flex items-center gap-2">
               <Activity className="h-4 w-4 text-primary" />
-              Revenue & Profit (Last 6 Months)
+              Receita & Lucro (Últimos 6 Meses)
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -85,21 +85,21 @@ export default function Dashboard() {
                       axisLine={false} 
                       tickLine={false} 
                       tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }}
-                      tickFormatter={(value) => `$${value/1000}k`}
+                      tickFormatter={(value) => `R$${value/1000}k`}
                     />
                     <RechartsTooltip 
                       contentStyle={{ backgroundColor: 'hsl(var(--popover))', borderColor: 'hsl(var(--border))', borderRadius: '8px' }}
                       itemStyle={{ color: 'hsl(var(--foreground))' }}
-                      formatter={(value: number) => [`$${value.toLocaleString()}`, undefined]}
+                      formatter={(value: number) => [`R$ ${value.toLocaleString("pt-BR")}`, undefined]}
                     />
-                    <Area type="monotone" dataKey="revenue" stroke="hsl(var(--primary))" strokeWidth={2} fillOpacity={1} fill="url(#colorRevenue)" />
-                    <Area type="monotone" dataKey="profit" stroke="#10B981" strokeWidth={2} fillOpacity={1} fill="url(#colorProfit)" />
+                    <Area type="monotone" dataKey="revenue" name="Receita" stroke="hsl(var(--primary))" strokeWidth={2} fillOpacity={1} fill="url(#colorRevenue)" />
+                    <Area type="monotone" dataKey="profit" name="Lucro" stroke="#10B981" strokeWidth={2} fillOpacity={1} fill="url(#colorProfit)" />
                   </AreaChart>
                 </ResponsiveContainer>
               </div>
             ) : (
               <div className="h-[300px] flex items-center justify-center text-muted-foreground text-sm">
-                No revenue data available
+                Nenhum dado de receita disponível
               </div>
             )}
           </CardContent>
@@ -109,7 +109,7 @@ export default function Dashboard() {
           <CardHeader>
             <CardTitle className="text-base font-semibold flex items-center gap-2">
               <Target className="h-4 w-4 text-primary" />
-              Recent Activity
+              Atividade Recente
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -131,15 +131,15 @@ export default function Dashboard() {
                   <div key={item.id} className="flex gap-3 relative before:absolute before:left-[3px] before:top-4 before:bottom-[-20px] before:w-[2px] before:bg-border last:before:hidden">
                     <div className="h-2 w-2 rounded-full bg-primary mt-1.5 shrink-0 z-10 ring-4 ring-card" />
                     <div className="flex flex-col">
-                      <p className="text-sm font-medium text-foreground">{item.description}</p>
-                      <p className="text-xs text-muted-foreground mt-0.5">{item.entityName} • {new Date(item.createdAt).toLocaleDateString()}</p>
+                      <p className="text-sm font-medium text-foreground">{translateActivity(item.description)}</p>
+                      <p className="text-xs text-muted-foreground mt-0.5">{item.entityName} • {new Date(item.createdAt).toLocaleDateString("pt-BR")}</p>
                     </div>
                   </div>
                 ))}
               </div>
             ) : (
               <div className="py-8 text-center text-muted-foreground text-sm">
-                No recent activity
+                Nenhuma atividade recente
               </div>
             )}
           </CardContent>
@@ -147,6 +147,16 @@ export default function Dashboard() {
       </div>
     </div>
   );
+}
+
+function translateActivity(description: string): string {
+  return description
+    .replace("New project created:", "Novo projeto criado:")
+    .replace("New client added:", "Novo cliente adicionado:")
+    .replace("Invoice paid:", "Fatura paga:")
+    .replace("New site added:", "Novo site adicionado:")
+    .replace("Task completed:", "Tarefa concluída:")
+    .replace("Team member invited:", "Membro convidado:");
 }
 
 function KpiCard({ title, value, icon: Icon, loading, alert }: { title: string, value: string, icon: any, loading: boolean, alert?: boolean }) {

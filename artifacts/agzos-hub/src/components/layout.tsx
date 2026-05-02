@@ -7,11 +7,11 @@ import { useState } from "react";
 const NAV_ITEMS = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
   { href: "/sites", label: "Sites", icon: Globe },
-  { href: "/projects", label: "Projects", icon: LayoutList },
-  { href: "/clients", label: "Clients", icon: Users },
-  { href: "/team", label: "Team", icon: UsersRound },
-  { href: "/financial", label: "Financial", icon: DollarSign },
-  { href: "/tools", label: "Tools", icon: Wrench },
+  { href: "/projects", label: "Projetos", icon: LayoutList },
+  { href: "/clients", label: "Clientes", icon: Users },
+  { href: "/team", label: "Equipe", icon: UsersRound },
+  { href: "/financial", label: "Financeiro", icon: DollarSign },
+  { href: "/tools", label: "Ferramentas", icon: Wrench },
 ];
 
 export function AppLayout({ children }: { children: React.ReactNode }) {
@@ -24,6 +24,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
         <h1 className="text-xl font-bold bg-gradient-to-r from-primary to-purple-400 bg-clip-text text-transparent tracking-tight">
           Agzos Hub
         </h1>
+        <p className="text-xs text-sidebar-foreground/40 mt-0.5">Sistema Interno</p>
       </div>
       
       <nav className="flex flex-col gap-1 flex-1">
@@ -53,7 +54,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
             AH
           </div>
           <div className="flex flex-col">
-            <span className="text-sm font-medium text-sidebar-foreground">Admin User</span>
+            <span className="text-sm font-medium text-sidebar-foreground">Admin</span>
             <span className="text-xs text-sidebar-foreground/50">admin@agzos.agency</span>
           </div>
         </div>
@@ -63,12 +64,12 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="flex min-h-[100dvh] w-full bg-background text-foreground dark">
-      {/* Desktop Sidebar */}
+      {/* Sidebar Desktop */}
       <aside className="hidden md:block w-64 h-screen sticky top-0 shrink-0">
         <NavContent />
       </aside>
 
-      {/* Mobile Header & Content */}
+      {/* Cabeçalho Mobile */}
       <div className="flex-1 flex flex-col min-w-0">
         <header className="md:hidden flex items-center justify-between p-4 border-b border-border bg-card sticky top-0 z-10">
           <h1 className="text-lg font-bold bg-gradient-to-r from-primary to-purple-400 bg-clip-text text-transparent">

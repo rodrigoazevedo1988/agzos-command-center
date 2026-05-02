@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useListSites, useGetSiteStats, SiteStatus } from "@workspace/api-client-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -12,14 +12,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import {
-  Table,
-  Body,
-  Cell,
-  Head,
-  Header,
-  Row,
-} from "@/components/ui/table"; // Assuming basic table components or using div based
 
 export default function Sites() {
   const [search, setSearch] = useState("");
@@ -36,11 +28,21 @@ export default function Sites() {
     }
   };
 
+  const getStatusLabel = (status: SiteStatus) => {
+    switch (status) {
+      case "active": return "Ativo";
+      case "development": return "Em Desenvolvimento";
+      case "maintenance": return "Manutenção";
+      case "paused": return "Pausado";
+      default: return status;
+    }
+  };
+
   const getStatusIcon = (status: SiteStatus) => {
     switch (status) {
       case "active": return <Activity className="w-3 h-3 mr-1" />;
       case "development": return <Settings className="w-3 h-3 mr-1" />;
-      case "maintenance": return <Settings className="w-3 h-3 mr-1 animate-spin-slow" />;
+      case "maintenance": return <Settings className="w-3 h-3 mr-1" />;
       case "paused": return <PauseCircle className="w-3 h-3 mr-1" />;
       default: return null;
     }
@@ -51,19 +53,19 @@ export default function Sites() {
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Sites</h1>
-          <p className="text-muted-foreground text-sm">Manage all client websites and web applications.</p>
+          <p className="text-muted-foreground text-sm">Gerencie todos os sites e aplicações dos clientes.</p>
         </div>
         <Button data-testid="btn-add-site" className="gap-2">
-          <Plus className="w-4 h-4" /> Add Site
+          <Plus className="w-4 h-4" /> Adicionar Site
         </Button>
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-        <StatCard title="Total Sites" value={stats?.total} loading={statsLoading} />
-        <StatCard title="Active" value={stats?.active} loading={statsLoading} className="text-emerald-500" />
-        <StatCard title="Development" value={stats?.development} loading={statsLoading} className="text-blue-500" />
-        <StatCard title="Maintenance" value={stats?.maintenance} loading={statsLoading} className="text-yellow-500" />
-        <StatCard title="Paused" value={stats?.paused} loading={statsLoading} className="text-muted-foreground" />
+        <StatCard title="Total" value={stats?.total} loading={statsLoading} />
+        <StatCard title="Ativos" value={stats?.active} loading={statsLoading} className="text-emerald-500" />
+        <StatCard title="Em Desenvolvimento" value={stats?.development} loading={statsLoading} className="text-blue-500" />
+        <StatCard title="Manutenção" value={stats?.maintenance} loading={statsLoading} className="text-yellow-500" />
+        <StatCard title="Pausados" value={stats?.paused} loading={statsLoading} className="text-muted-foreground" />
       </div>
 
       <Card className="border-border/50 bg-card/50 backdrop-blur-xl">
@@ -71,7 +73,7 @@ export default function Sites() {
           <div className="relative flex-1 max-w-sm">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input 
-              placeholder="Search sites..." 
+              placeholder="Buscar sites..." 
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="pl-9 bg-background/50 border-border/50"
@@ -85,10 +87,10 @@ export default function Sites() {
             <thead className="text-xs text-muted-foreground bg-muted/20 uppercase border-b border-border/50">
               <tr>
                 <th className="px-6 py-4 font-medium">Site & URL</th>
-                <th className="px-6 py-4 font-medium">Client</th>
+                <th className="px-6 py-4 font-medium">Cliente</th>
                 <th className="px-6 py-4 font-medium">Status</th>
-                <th className="px-6 py-4 font-medium">Platform</th>
-                <th className="px-6 py-4 font-medium text-right">Actions</th>
+                <th className="px-6 py-4 font-medium">Plataforma</th>
+                <th className="px-6 py-4 font-medium text-right">Ações</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border/50">
@@ -106,7 +108,7 @@ export default function Sites() {
                 <tr>
                   <td colSpan={5} className="px-6 py-12 text-center text-muted-foreground">
                     <Globe className="w-12 h-12 mx-auto mb-3 opacity-20" />
-                    <p>No sites found matching your criteria.</p>
+                    <p>Nenhum site encontrado para os critérios informados.</p>
                   </td>
                 </tr>
               ) : (
@@ -124,7 +126,7 @@ export default function Sites() {
                     <td className="px-6 py-4">
                       <Badge variant="outline" className={`px-2.5 py-0.5 rounded-full font-medium ${getStatusColor(site.status)}`}>
                         {getStatusIcon(site.status)}
-                        <span className="capitalize">{site.status}</span>
+                        <span>{getStatusLabel(site.status)}</span>
                       </Badge>
                     </td>
                     <td className="px-6 py-4 text-muted-foreground">
@@ -138,14 +140,14 @@ export default function Sites() {
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="w-40">
-                          <DropdownMenuItem className="cursor-pointer">Edit details</DropdownMenuItem>
+                          <DropdownMenuItem className="cursor-pointer">Editar detalhes</DropdownMenuItem>
                           {site.adminUrl && (
                             <DropdownMenuItem className="cursor-pointer" onClick={() => window.open(site.adminUrl, '_blank')}>
-                              Open Admin
+                              Abrir Admin
                             </DropdownMenuItem>
                           )}
                           <DropdownMenuItem className="text-destructive cursor-pointer focus:bg-destructive focus:text-destructive-foreground">
-                            Delete site
+                            Excluir site
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>

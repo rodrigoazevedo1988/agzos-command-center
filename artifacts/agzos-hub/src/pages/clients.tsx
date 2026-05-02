@@ -1,5 +1,5 @@
 import { useListClients, useGetClientFunnel } from "@workspace/api-client-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -26,28 +26,39 @@ export default function Clients() {
     }
   };
 
+  const getStageLabel = (stage: string) => {
+    switch (stage) {
+      case "lead": return "Lead";
+      case "proposal": return "Proposta";
+      case "contract": return "Contrato";
+      case "active": return "Ativo";
+      case "churned": return "Cancelado";
+      default: return stage;
+    }
+  };
+
   return (
     <div className="flex flex-col gap-6 animate-in fade-in duration-500">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Clients</h1>
-          <p className="text-muted-foreground text-sm">Manage client relationships and sales pipeline.</p>
+          <h1 className="text-3xl font-bold tracking-tight">Clientes</h1>
+          <p className="text-muted-foreground text-sm">Gerencie relacionamentos e o funil de vendas.</p>
         </div>
         <Button data-testid="btn-add-client" className="gap-2">
-          <Plus className="w-4 h-4" /> Add Client
+          <Plus className="w-4 h-4" /> Adicionar Cliente
         </Button>
       </div>
 
       <Card className="border-border/50 bg-card/50 backdrop-blur-xl overflow-hidden">
         <div className="p-4 md:p-6 grid grid-cols-2 md:grid-cols-6 divide-x divide-y md:divide-y-0 divide-border/50 gap-y-4">
           <FunnelStat title="Leads" value={funnel?.lead} loading={funnelLoading} />
-          <FunnelStat title="Proposals" value={funnel?.proposal} loading={funnelLoading} />
-          <FunnelStat title="Contracts" value={funnel?.contract} loading={funnelLoading} />
-          <FunnelStat title="Active" value={funnel?.active} loading={funnelLoading} className="text-emerald-500" />
-          <FunnelStat title="Churned" value={funnel?.churned} loading={funnelLoading} className="text-muted-foreground" />
+          <FunnelStat title="Propostas" value={funnel?.proposal} loading={funnelLoading} />
+          <FunnelStat title="Contratos" value={funnel?.contract} loading={funnelLoading} />
+          <FunnelStat title="Ativos" value={funnel?.active} loading={funnelLoading} className="text-emerald-500" />
+          <FunnelStat title="Cancelados" value={funnel?.churned} loading={funnelLoading} className="text-muted-foreground" />
           <FunnelStat 
-            title="Total Pipeline" 
-            value={funnel?.totalPipelineValue ? `$${funnel.totalPipelineValue.toLocaleString()}` : "$0"} 
+            title="Pipeline Total" 
+            value={funnel?.totalPipelineValue ? `R$ ${funnel.totalPipelineValue.toLocaleString("pt-BR")}` : "R$ 0"} 
             loading={funnelLoading} 
             className="text-primary font-bold" 
             isCurrency
@@ -60,7 +71,7 @@ export default function Clients() {
           Array.from({ length: 6 }).map((_, i) => <Skeleton key={i} className="h-48 w-full rounded-xl" />)
         ) : clients?.length === 0 ? (
           <div className="col-span-full py-12 text-center text-muted-foreground">
-            <p>No clients found.</p>
+            <p>Nenhum cliente encontrado.</p>
           </div>
         ) : (
           clients?.map((client) => (
@@ -86,8 +97,8 @@ export default function Clients() {
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
-                    <DropdownMenuItem>View details</DropdownMenuItem>
-                    <DropdownMenuItem>Edit client</DropdownMenuItem>
+                    <DropdownMenuItem>Ver detalhes</DropdownMenuItem>
+                    <DropdownMenuItem>Editar cliente</DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
               </CardHeader>
@@ -108,11 +119,11 @@ export default function Clients() {
                 </div>
                 
                 <div className="mt-auto pt-4 border-t border-border/50 flex items-center justify-between">
-                  <Badge variant="outline" className={`capitalize px-2 py-0.5 text-xs font-medium ${getStageColor(client.stage)}`}>
-                    {client.stage}
+                  <Badge variant="outline" className={`px-2 py-0.5 text-xs font-medium ${getStageColor(client.stage)}`}>
+                    {getStageLabel(client.stage)}
                   </Badge>
                   {client.monthlyValue ? (
-                    <div className="text-sm font-semibold">${client.monthlyValue.toLocaleString()}/mo</div>
+                    <div className="text-sm font-semibold">R$ {client.monthlyValue.toLocaleString("pt-BR")}/mês</div>
                   ) : null}
                 </div>
               </CardContent>
@@ -132,7 +143,7 @@ function FunnelStat({ title, value, loading, className = "text-foreground", isCu
         <Skeleton className="h-6 w-16" />
       ) : (
         <span className={`text-xl font-bold ${className}`}>
-          {value !== undefined ? value : (isCurrency ? "$0" : 0)}
+          {value !== undefined ? value : (isCurrency ? "R$ 0" : 0)}
         </span>
       )}
     </div>
