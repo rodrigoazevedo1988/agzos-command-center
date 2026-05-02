@@ -12,6 +12,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { PermissionGuard } from "@/components/PermissionGuard";
 
 export default function Sites() {
   const [search, setSearch] = useState("");
@@ -55,9 +56,11 @@ export default function Sites() {
           <h1 className="text-3xl font-bold tracking-tight">Sites</h1>
           <p className="text-muted-foreground text-sm">Gerencie todos os sites e aplicações dos clientes.</p>
         </div>
-        <Button data-testid="btn-add-site" className="gap-2">
-          <Plus className="w-4 h-4" /> Adicionar Site
-        </Button>
+        <PermissionGuard action="sites.create" tooltip="Apenas Admin, Gerente de Conta e Dev podem adicionar sites.">
+          <Button data-testid="btn-add-site" className="gap-2">
+            <Plus className="w-4 h-4" /> Adicionar Site
+          </Button>
+        </PermissionGuard>
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
@@ -72,8 +75,8 @@ export default function Sites() {
         <div className="p-4 border-b border-border/50 flex items-center gap-4">
           <div className="relative flex-1 max-w-sm">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-            <Input 
-              placeholder="Buscar sites..." 
+            <Input
+              placeholder="Buscar sites..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="pl-9 bg-background/50 border-border/50"
@@ -81,7 +84,7 @@ export default function Sites() {
             />
           </div>
         </div>
-        
+
         <div className="p-0 overflow-x-auto">
           <table className="w-full text-sm text-left">
             <thead className="text-xs text-muted-foreground bg-muted/20 uppercase border-b border-border/50">
@@ -116,39 +119,62 @@ export default function Sites() {
                   <tr key={site.id} className="hover:bg-muted/10 transition-colors group">
                     <td className="px-6 py-4">
                       <div className="font-medium text-foreground">{site.name}</div>
-                      <a href={site.url} target="_blank" rel="noreferrer" className="text-xs text-muted-foreground hover:text-primary flex items-center gap-1 mt-1 w-fit">
-                        {site.url.replace(/^https?:\/\//, '')} <ExternalLink className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" />
+                      <a
+                        href={site.url}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-xs text-muted-foreground hover:text-primary flex items-center gap-1 mt-1 w-fit"
+                      >
+                        {site.url.replace(/^https?:\/\//, "")}
+                        <ExternalLink className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" />
                       </a>
                     </td>
                     <td className="px-6 py-4 text-muted-foreground">
-                      {site.clientName || '—'}
+                      {site.clientName || "—"}
                     </td>
                     <td className="px-6 py-4">
-                      <Badge variant="outline" className={`px-2.5 py-0.5 rounded-full font-medium ${getStatusColor(site.status)}`}>
+                      <Badge
+                        variant="outline"
+                        className={`px-2.5 py-0.5 rounded-full font-medium ${getStatusColor(site.status)}`}
+                      >
                         {getStatusIcon(site.status)}
                         <span>{getStatusLabel(site.status)}</span>
                       </Badge>
                     </td>
                     <td className="px-6 py-4 text-muted-foreground">
-                      {site.platform || '—'}
+                      {site.platform || "—"}
                     </td>
                     <td className="px-6 py-4 text-right">
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon" className="h-8 w-8" data-testid={`btn-site-actions-${site.id}`}>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8"
+                            data-testid={`btn-site-actions-${site.id}`}
+                          >
                             <MoreVertical className="h-4 w-4" />
                           </Button>
                         </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="w-40">
-                          <DropdownMenuItem className="cursor-pointer">Editar detalhes</DropdownMenuItem>
+                        <DropdownMenuContent align="end" className="w-44">
+                          <PermissionGuard action="sites.edit" tooltip="Sem permissão para editar." hide>
+                            <DropdownMenuItem className="cursor-pointer">
+                              Editar detalhes
+                            </DropdownMenuItem>
+                          </PermissionGuard>
                           {site.adminUrl && (
-                            <DropdownMenuItem className="cursor-pointer" onClick={() => window.open(site.adminUrl, '_blank')}>
+                            <DropdownMenuItem
+                              className="cursor-pointer"
+                              onClick={() => window.open(site.adminUrl, "_blank")}
+                            >
                               Abrir Admin
                             </DropdownMenuItem>
                           )}
-                          <DropdownMenuItem className="text-destructive cursor-pointer focus:bg-destructive focus:text-destructive-foreground">
-                            Excluir site
-                          </DropdownMenuItem>
+                          <PermissionGuard action="sites.delete" tooltip="Sem permissão para excluir." hide>
+                            <DropdownMenuItem className="text-destructive cursor-pointer focus:bg-destructive focus:text-destructive-foreground">
+                              Excluir site
+                            </DropdownMenuItem>
+                          </PermissionGuard>
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </td>
@@ -163,7 +189,17 @@ export default function Sites() {
   );
 }
 
-function StatCard({ title, value, loading, className = "text-foreground" }: { title: string, value?: number, loading: boolean, className?: string }) {
+function StatCard({
+  title,
+  value,
+  loading,
+  className = "text-foreground",
+}: {
+  title: string;
+  value?: number;
+  loading: boolean;
+  className?: string;
+}) {
   return (
     <Card className="border-border/50 bg-card/50 backdrop-blur-xl">
       <CardContent className="p-4 flex flex-col items-center text-center">

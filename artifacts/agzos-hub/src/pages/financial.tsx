@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Plus, DollarSign, TrendingUp, AlertCircle, Clock, FileText } from "lucide-react";
+import { PermissionGuard } from "@/components/PermissionGuard";
 
 export default function Financial() {
   const { data: invoices, isLoading } = useListInvoices({});
@@ -37,9 +38,11 @@ export default function Financial() {
           <h1 className="text-3xl font-bold tracking-tight">Financeiro</h1>
           <p className="text-muted-foreground text-sm">Gerencie faturas, receitas e despesas da agência.</p>
         </div>
-        <Button data-testid="btn-create-invoice" className="gap-2">
-          <Plus className="w-4 h-4" /> Criar Fatura
-        </Button>
+        <PermissionGuard action="financial.create" tooltip="Apenas Admin e Financeiro podem criar faturas.">
+          <Button data-testid="btn-create-invoice" className="gap-2">
+            <Plus className="w-4 h-4" /> Criar Fatura
+          </Button>
+        </PermissionGuard>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -50,11 +53,17 @@ export default function Financial() {
             </div>
             <div>
               <p className="text-sm font-medium text-muted-foreground">Receita Total (Período)</p>
-              {summaryLoading ? <Skeleton className="h-8 w-32 mt-1" /> : <p className="text-3xl font-bold tracking-tight">R$ {summary?.totalRevenue?.toLocaleString("pt-BR") || "0"}</p>}
+              {summaryLoading ? (
+                <Skeleton className="h-8 w-32 mt-1" />
+              ) : (
+                <p className="text-3xl font-bold tracking-tight">
+                  R$ {summary?.totalRevenue?.toLocaleString("pt-BR") || "0"}
+                </p>
+              )}
             </div>
           </CardContent>
         </Card>
-        
+
         <Card className="border-border/50 bg-card/50 backdrop-blur-xl">
           <CardContent className="p-6 flex items-center gap-4">
             <div className="p-3 rounded-xl bg-emerald-500/10 text-emerald-500">
@@ -62,7 +71,13 @@ export default function Financial() {
             </div>
             <div>
               <p className="text-sm font-medium text-muted-foreground">Lucro Líquido (Período)</p>
-              {summaryLoading ? <Skeleton className="h-8 w-32 mt-1" /> : <p className="text-3xl font-bold tracking-tight text-emerald-500">R$ {summary?.profit?.toLocaleString("pt-BR") || "0"}</p>}
+              {summaryLoading ? (
+                <Skeleton className="h-8 w-32 mt-1" />
+              ) : (
+                <p className="text-3xl font-bold tracking-tight text-emerald-500">
+                  R$ {summary?.profit?.toLocaleString("pt-BR") || "0"}
+                </p>
+              )}
             </div>
           </CardContent>
         </Card>
@@ -74,7 +89,13 @@ export default function Financial() {
             </div>
             <div>
               <p className="text-sm font-medium text-muted-foreground">Faturas Vencidas</p>
-              {summaryLoading ? <Skeleton className="h-8 w-16 mt-1" /> : <p className="text-3xl font-bold tracking-tight text-destructive">R$ {summary?.overdueInvoices?.toLocaleString("pt-BR") || "0"}</p>}
+              {summaryLoading ? (
+                <Skeleton className="h-8 w-16 mt-1" />
+              ) : (
+                <p className="text-3xl font-bold tracking-tight text-destructive">
+                  R$ {summary?.overdueInvoices?.toLocaleString("pt-BR") || "0"}
+                </p>
+              )}
             </div>
           </CardContent>
         </Card>
@@ -118,18 +139,27 @@ export default function Financial() {
                   <tr key={invoice.id} className="hover:bg-muted/10 transition-colors cursor-pointer">
                     <td className="px-6 py-4 font-medium font-mono text-xs">{invoice.number}</td>
                     <td className="px-6 py-4">
-                      <div className="font-medium">{invoice.clientName || '—'}</div>
-                      {invoice.projectName && <div className="text-xs text-muted-foreground mt-0.5">{invoice.projectName}</div>}
+                      <div className="font-medium">{invoice.clientName || "—"}</div>
+                      {invoice.projectName && (
+                        <div className="text-xs text-muted-foreground mt-0.5">{invoice.projectName}</div>
+                      )}
                     </td>
-                    <td className="px-6 py-4 font-semibold">R$ {invoice.amount.toLocaleString("pt-BR")}</td>
+                    <td className="px-6 py-4 font-semibold">
+                      R$ {invoice.amount.toLocaleString("pt-BR")}
+                    </td>
                     <td className="px-6 py-4">
-                      <Badge variant="outline" className={`px-2.5 py-0.5 text-xs ${getStatusColor(invoice.status)}`}>
+                      <Badge
+                        variant="outline"
+                        className={`px-2.5 py-0.5 text-xs ${getStatusColor(invoice.status)}`}
+                      >
                         {getStatusLabel(invoice.status)}
                       </Badge>
                     </td>
                     <td className="px-6 py-4 text-right text-muted-foreground flex items-center justify-end gap-1.5">
                       <Clock className="w-3.5 h-3.5 opacity-50" />
-                      {invoice.dueDate ? new Date(invoice.dueDate).toLocaleDateString("pt-BR") : '—'}
+                      {invoice.dueDate
+                        ? new Date(invoice.dueDate).toLocaleDateString("pt-BR")
+                        : "—"}
                     </td>
                   </tr>
                 ))

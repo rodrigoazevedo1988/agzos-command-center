@@ -10,6 +10,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { PermissionGuard } from "@/components/PermissionGuard";
 
 export default function Clients() {
   const { data: clients, isLoading } = useListClients({});
@@ -44,9 +45,11 @@ export default function Clients() {
           <h1 className="text-3xl font-bold tracking-tight">Clientes</h1>
           <p className="text-muted-foreground text-sm">Gerencie relacionamentos e o funil de vendas.</p>
         </div>
-        <Button data-testid="btn-add-client" className="gap-2">
-          <Plus className="w-4 h-4" /> Adicionar Cliente
-        </Button>
+        <PermissionGuard action="clients.create" tooltip="Apenas Admin e Gerente de Conta podem adicionar clientes.">
+          <Button data-testid="btn-add-client" className="gap-2">
+            <Plus className="w-4 h-4" /> Adicionar Cliente
+          </Button>
+        </PermissionGuard>
       </div>
 
       <Card className="border-border/50 bg-card/50 backdrop-blur-xl overflow-hidden">
@@ -56,11 +59,15 @@ export default function Clients() {
           <FunnelStat title="Contratos" value={funnel?.contract} loading={funnelLoading} />
           <FunnelStat title="Ativos" value={funnel?.active} loading={funnelLoading} className="text-emerald-500" />
           <FunnelStat title="Cancelados" value={funnel?.churned} loading={funnelLoading} className="text-muted-foreground" />
-          <FunnelStat 
-            title="Pipeline Total" 
-            value={funnel?.totalPipelineValue ? `R$ ${funnel.totalPipelineValue.toLocaleString("pt-BR")}` : "R$ 0"} 
-            loading={funnelLoading} 
-            className="text-primary font-bold" 
+          <FunnelStat
+            title="Pipeline Total"
+            value={
+              funnel?.totalPipelineValue
+                ? `R$ ${funnel.totalPipelineValue.toLocaleString("pt-BR")}`
+                : "R$ 0"
+            }
+            loading={funnelLoading}
+            className="text-primary font-bold"
             isCurrency
           />
         </div>
@@ -68,14 +75,19 @@ export default function Clients() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {isLoading ? (
-          Array.from({ length: 6 }).map((_, i) => <Skeleton key={i} className="h-48 w-full rounded-xl" />)
+          Array.from({ length: 6 }).map((_, i) => (
+            <Skeleton key={i} className="h-48 w-full rounded-xl" />
+          ))
         ) : clients?.length === 0 ? (
           <div className="col-span-full py-12 text-center text-muted-foreground">
             <p>Nenhum cliente encontrado.</p>
           </div>
         ) : (
           clients?.map((client) => (
-            <Card key={client.id} className="border-border/50 bg-card/50 backdrop-blur-xl hover:border-primary/30 transition-all group flex flex-col">
+            <Card
+              key={client.id}
+              className="border-border/50 bg-card/50 backdrop-blur-xl hover:border-primary/30 transition-all group flex flex-col"
+            >
               <CardHeader className="p-5 pb-0 flex flex-row items-start justify-between">
                 <div className="flex items-center gap-3">
                   <div className="h-10 w-10 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center text-primary font-bold overflow-hidden">
@@ -87,18 +99,31 @@ export default function Clients() {
                   </div>
                   <div>
                     <h3 className="font-semibold leading-none">{client.name}</h3>
-                    {client.companyName && <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1"><Building2 className="w-3 h-3" /> {client.companyName}</p>}
+                    {client.companyName && (
+                      <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
+                        <Building2 className="w-3 h-3" /> {client.companyName}
+                      </p>
+                    )}
                   </div>
                 </div>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="icon" className="h-8 w-8 -mr-2 -mt-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 -mr-2 -mt-2 opacity-0 group-hover:opacity-100 transition-opacity"
+                    >
                       <MoreHorizontal className="h-4 w-4" />
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
                     <DropdownMenuItem>Ver detalhes</DropdownMenuItem>
-                    <DropdownMenuItem>Editar cliente</DropdownMenuItem>
+                    <PermissionGuard action="clients.edit" tooltip="Sem permissão para editar." hide>
+                      <DropdownMenuItem>Editar cliente</DropdownMenuItem>
+                    </PermissionGuard>
+                    <PermissionGuard action="clients.delete" tooltip="Sem permissão para excluir." hide>
+                      <DropdownMenuItem className="text-destructive">Excluir cliente</DropdownMenuItem>
+                    </PermissionGuard>
                   </DropdownMenuContent>
                 </DropdownMenu>
               </CardHeader>
@@ -117,13 +142,18 @@ export default function Clients() {
                     </div>
                   )}
                 </div>
-                
+
                 <div className="mt-auto pt-4 border-t border-border/50 flex items-center justify-between">
-                  <Badge variant="outline" className={`px-2 py-0.5 text-xs font-medium ${getStageColor(client.stage)}`}>
+                  <Badge
+                    variant="outline"
+                    className={`px-2 py-0.5 text-xs font-medium ${getStageColor(client.stage)}`}
+                  >
                     {getStageLabel(client.stage)}
                   </Badge>
                   {client.monthlyValue ? (
-                    <div className="text-sm font-semibold">R$ {client.monthlyValue.toLocaleString("pt-BR")}/mês</div>
+                    <div className="text-sm font-semibold">
+                      R$ {client.monthlyValue.toLocaleString("pt-BR")}/mês
+                    </div>
                   ) : null}
                 </div>
               </CardContent>
@@ -135,15 +165,29 @@ export default function Clients() {
   );
 }
 
-function FunnelStat({ title, value, loading, className = "text-foreground", isCurrency = false }: { title: string, value?: number | string, loading: boolean, className?: string, isCurrency?: boolean }) {
+function FunnelStat({
+  title,
+  value,
+  loading,
+  className = "text-foreground",
+  isCurrency = false,
+}: {
+  title: string;
+  value?: number | string;
+  loading: boolean;
+  className?: string;
+  isCurrency?: boolean;
+}) {
   return (
     <div className="flex flex-col items-center justify-center p-2 text-center">
-      <span className="text-xs font-medium text-muted-foreground mb-1 uppercase tracking-wider">{title}</span>
+      <span className="text-xs font-medium text-muted-foreground mb-1 uppercase tracking-wider">
+        {title}
+      </span>
       {loading ? (
         <Skeleton className="h-6 w-16" />
       ) : (
         <span className={`text-xl font-bold ${className}`}>
-          {value !== undefined ? value : (isCurrency ? "R$ 0" : 0)}
+          {value !== undefined ? value : isCurrency ? "R$ 0" : 0}
         </span>
       )}
     </div>

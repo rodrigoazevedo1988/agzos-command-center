@@ -1,10 +1,11 @@
-import { useListProjects, useGetProjectsSummary, ProjectStatus } from "@workspace/api-client-react";
+import { useListProjects, useGetProjectsSummary } from "@workspace/api-client-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Plus, ListFilter, Calendar } from "lucide-react";
+import { PermissionGuard } from "@/components/PermissionGuard";
 
 export default function Projects() {
   const { data: projects, isLoading } = useListProjects({});
@@ -53,9 +54,11 @@ export default function Projects() {
           <Button variant="outline" className="gap-2 border-border/50 bg-background/50">
             <ListFilter className="w-4 h-4" /> Filtrar
           </Button>
-          <Button data-testid="btn-add-project" className="gap-2">
-            <Plus className="w-4 h-4" /> Novo Projeto
-          </Button>
+          <PermissionGuard action="projects.create" tooltip="Apenas Admin, Gerente de Conta e Gestor de Tráfego podem criar projetos.">
+            <Button data-testid="btn-add-project" className="gap-2">
+              <Plus className="w-4 h-4" /> Novo Projeto
+            </Button>
+          </PermissionGuard>
         </div>
       </div>
 
@@ -68,7 +71,9 @@ export default function Projects() {
 
       <div className="grid grid-cols-1 gap-4">
         {isLoading ? (
-          Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-32 w-full rounded-xl" />)
+          Array.from({ length: 3 }).map((_, i) => (
+            <Skeleton key={i} className="h-32 w-full rounded-xl" />
+          ))
         ) : projects?.length === 0 ? (
           <Card className="border-border/50 bg-card/50 backdrop-blur-xl border-dashed">
             <div className="py-12 text-center text-muted-foreground">
@@ -77,36 +82,57 @@ export default function Projects() {
           </Card>
         ) : (
           projects?.map((project) => (
-            <Card key={project.id} className="border-border/50 bg-card/50 backdrop-blur-xl hover:border-primary/50 transition-colors group cursor-pointer overflow-hidden relative">
+            <Card
+              key={project.id}
+              className="border-border/50 bg-card/50 backdrop-blur-xl hover:border-primary/50 transition-colors group cursor-pointer overflow-hidden relative"
+            >
               <div className="absolute top-0 left-0 w-1 h-full bg-border group-hover:bg-primary transition-colors" />
               <CardContent className="p-5 flex flex-col md:flex-row gap-6 md:items-center">
                 <div className="flex-1 space-y-3">
                   <div className="flex items-start justify-between">
                     <div>
                       <h3 className="font-semibold text-lg">{project.name}</h3>
-                      <p className="text-sm text-muted-foreground mt-1 line-clamp-1">{project.description || 'Sem descrição'}</p>
+                      <p className="text-sm text-muted-foreground mt-1 line-clamp-1">
+                        {project.description || "Sem descrição"}
+                      </p>
                     </div>
-                    <Badge variant="outline" className={`ml-4 shrink-0 uppercase text-[10px] tracking-wider px-2 py-0.5 ${getPriorityColor(project.priority)}`}>
+                    <Badge
+                      variant="outline"
+                      className={`ml-4 shrink-0 uppercase text-[10px] tracking-wider px-2 py-0.5 ${getPriorityColor(project.priority)}`}
+                    >
                       {translatePriority(project.priority)}
                     </Badge>
                   </div>
-                  
+
                   <div className="flex flex-wrap gap-x-6 gap-y-2 text-xs text-muted-foreground">
                     {project.clientName && (
-                      <span className="flex items-center gap-1.5"><div className="w-1.5 h-1.5 rounded-full bg-primary/50" /> {project.clientName}</span>
+                      <span className="flex items-center gap-1.5">
+                        <div className="w-1.5 h-1.5 rounded-full bg-primary/50" />
+                        {project.clientName}
+                      </span>
                     )}
                     {project.assigneeName && (
-                      <span className="flex items-center gap-1.5"><div className="w-4 h-4 rounded-full bg-muted flex items-center justify-center text-[8px] font-bold text-foreground">{project.assigneeName.charAt(0)}</div> {project.assigneeName}</span>
+                      <span className="flex items-center gap-1.5">
+                        <div className="w-4 h-4 rounded-full bg-muted flex items-center justify-center text-[8px] font-bold text-foreground">
+                          {project.assigneeName.charAt(0)}
+                        </div>
+                        {project.assigneeName}
+                      </span>
                     )}
                     {project.dueDate && (
-                      <span className="flex items-center gap-1.5"><Calendar className="w-3.5 h-3.5" /> {new Date(project.dueDate).toLocaleDateString("pt-BR")}</span>
+                      <span className="flex items-center gap-1.5">
+                        <Calendar className="w-3.5 h-3.5" />
+                        {new Date(project.dueDate).toLocaleDateString("pt-BR")}
+                      </span>
                     )}
                   </div>
                 </div>
 
                 <div className="w-full md:w-64 shrink-0 space-y-2">
                   <div className="flex justify-between items-end text-sm">
-                    <span className="font-medium text-foreground">{translateStatus(project.status)}</span>
+                    <span className="font-medium text-foreground">
+                      {translateStatus(project.status)}
+                    </span>
                     <span className="text-muted-foreground text-xs">{project.progress}%</span>
                   </div>
                   <Progress value={project.progress} className="h-2 bg-muted/30" />
@@ -120,7 +146,17 @@ export default function Projects() {
   );
 }
 
-function StatCard({ title, value, loading, className = "text-foreground" }: { title: string, value?: number, loading: boolean, className?: string }) {
+function StatCard({
+  title,
+  value,
+  loading,
+  className = "text-foreground",
+}: {
+  title: string;
+  value?: number;
+  loading: boolean;
+  className?: string;
+}) {
   return (
     <Card className="border-border/50 bg-card/50 backdrop-blur-xl">
       <CardContent className="p-4 flex flex-col items-center text-center">
