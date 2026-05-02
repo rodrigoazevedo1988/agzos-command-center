@@ -515,7 +515,7 @@ export default function Reports() {
   ] as const;
 
   return (
-    <div className="space-y-6 pb-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+    <div ref={reportRef} className="space-y-6 pb-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
       {/* Header */}
       <div className="flex items-start justify-between flex-wrap gap-4">
         <div>
@@ -541,9 +541,6 @@ export default function Reports() {
           </Button>
         </div>
       </div>
-
-      {/* Capturable content for PDF */}
-      <div ref={reportRef}>
 
       {/* KPI Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
@@ -731,7 +728,6 @@ export default function Reports() {
         </div>
       )}
 
-      </div>{/* end reportRef */}
     </div>
   );
 }
