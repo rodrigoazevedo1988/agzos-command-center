@@ -12,6 +12,7 @@ import Clients from "@/pages/clients";
 import Team from "@/pages/team";
 import Financial from "@/pages/financial";
 import Tools from "@/pages/tools";
+import NotificationsPage from "@/pages/notifications";
 import NotFound from "@/pages/not-found";
 
 const queryClient = new QueryClient();
@@ -27,6 +28,7 @@ function Router() {
         <Route path="/team" component={Team} />
         <Route path="/financial" component={Financial} />
         <Route path="/tools" component={Tools} />
+        <Route path="/notifications" component={NotificationsPage} />
         <Route component={NotFound} />
       </Switch>
     </AppLayout>

@@ -8,6 +8,7 @@ import {
   DollarSign,
   Wrench,
   Menu,
+  Bell,
 } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
@@ -17,6 +18,8 @@ import { useAuthStore } from "@/store/useAuthStore";
 import type { AuthUser } from "@/store/useAuthStore";
 import { ROLE_LABELS, ROLE_COLORS, NavModule } from "@/lib/permissions";
 import { RoleSwitcher } from "@/components/RoleSwitcher";
+import { NotificationBell } from "@/components/NotificationBell";
+import { useNotificationsStore, selectUnreadCount } from "@/store/useNotificationsStore";
 
 const NAV_ITEMS: { href: string; label: string; icon: any; module: NavModule }[] = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard, module: "dashboard" },
@@ -27,6 +30,41 @@ const NAV_ITEMS: { href: string; label: string; icon: any; module: NavModule }[]
   { href: "/financial", label: "Financeiro", icon: DollarSign, module: "financial" },
   { href: "/tools", label: "Ferramentas", icon: Wrench, module: "tools" },
 ];
+
+const NOTIF_NAV = { href: "/notifications", label: "Notificações", icon: Bell };
+
+function NotifNavLink({ location, onNavigate }: { location: string; onNavigate: () => void }) {
+  const unread = useNotificationsStore(selectUnreadCount);
+  const isActive = location === NOTIF_NAV.href;
+  return (
+    <div className="px-4 pt-2 border-t border-sidebar-border/50 mt-2">
+      <Link href={NOTIF_NAV.href} onClick={onNavigate}>
+        <div
+          className={`flex items-center gap-3 px-3 py-2.5 rounded-md transition-colors cursor-pointer text-sm font-medium ${
+            isActive
+              ? "bg-sidebar-accent text-sidebar-accent-foreground"
+              : "text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
+          }`}
+        >
+          <div className="relative">
+            <NOTIF_NAV.icon className={`h-4 w-4 shrink-0 ${isActive ? "text-primary" : ""}`} />
+            {unread > 0 && (
+              <span className="absolute -top-1.5 -right-1.5 h-3.5 w-3.5 rounded-full bg-primary text-[9px] font-bold text-white flex items-center justify-center leading-none">
+                {unread > 9 ? "9+" : unread}
+              </span>
+            )}
+          </div>
+          {NOTIF_NAV.label}
+          {unread > 0 && (
+            <Badge className="ml-auto bg-primary/20 text-primary border-primary/30 text-[10px] px-1.5 py-0 h-4">
+              {unread}
+            </Badge>
+          )}
+        </div>
+      </Link>
+    </div>
+  );
+}
 
 function SidebarNav({
   visibleItems,
@@ -70,6 +108,9 @@ function SidebarNav({
           );
         })}
       </nav>
+
+      {/* Notifications link */}
+      <NotifNavLink location={location} onNavigate={onNavigate} />
 
       <div className="mt-auto pt-4 border-t border-sidebar-border space-y-3">
         <div className="px-3">
@@ -143,8 +184,9 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
           {/* Desktop: espaço para topbar */}
           <div className="hidden md:block" />
 
-          {/* Role Switcher */}
-          <div className="flex items-center gap-3">
+          {/* Topbar right */}
+          <div className="flex items-center gap-2">
+            <NotificationBell />
             <RoleSwitcher />
           </div>
         </header>

@@ -28,11 +28,20 @@ Internal management system for Agzos Agency. A full-stack React + Express app fo
 
 1. **Dashboard** — KPIs, revenue chart, recent activity
 2. **Sites** — Manage all client sites (status, URL, platform, deployments)
-3. **Projects** — Track projects with priority, progress, assignees, due dates
+3. **Projects** — Track projects with priority, progress, assignees, due dates; Kanban (dnd-kit), List, Gantt, live timers, task detail dialog
 4. **Clients** — CRM funnel (Lead → Proposal → Contract → Active → Churned)
 5. **Team** — RBAC-ready team roster with roles (admin, account_manager, traffic_manager, designer, developer, financial, client)
 6. **Financial** — Invoice management, monthly summary, overdue tracking
 7. **Tools** — Agency tools registry with categories and cost tracking
+8. **Notifications** (`/notifications`) — Full notification history page with read/type filters, stats sidebar, settings; bell icon in topbar with dropdown (8 recent, mark read, clear); Web Push via browser Notification API; real-time simulation via setInterval (15s); Zustand store with `persist` (`agzos-notifications`)
+
+## Frontend State (Zustand Stores)
+
+All stores are in `artifacts/agzos-hub/src/store/`:
+- `useAuthStore` — current user, RBAC permissions
+- `useSitesStore` — 7 mock sites, CRUD, filters
+- `useProjectsStore` — 5 projects, 12 tasks, team, kanban drag-and-drop, live timers
+- `useNotificationsStore` — notifications (type `AppNotification`), push toggle, realtime simulation, persisted to localStorage
 
 ## API Routes
 
