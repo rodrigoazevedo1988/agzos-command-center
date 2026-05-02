@@ -2,7 +2,7 @@ import { Link, useLocation } from "wouter";
 import {
   LayoutDashboard, Globe, LayoutList, Users, UsersRound,
   DollarSign, Wrench, Menu, Bell, BarChart2, Settings,
-  Search, Sun, Moon, CalendarDays,
+  Search, Sun, Moon, CalendarDays, Activity,
 } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
@@ -26,6 +26,7 @@ const NAV_ITEMS: { href: string; label: string; icon: any; module: NavModule }[]
   { href: "/financial",    label: "Financeiro",    icon: DollarSign,      module: "financial" },
   { href: "/tools",        label: "Ferramentas",   icon: Wrench,          module: "tools" },
   { href: "/calendar",     label: "Calendário",    icon: CalendarDays,    module: "calendar" },
+  { href: "/activity",     label: "Atividade",     icon: Activity,        module: "activity" },
   { href: "/reports",      label: "Relatórios",    icon: BarChart2,       module: "reports" },
   { href: "/settings",     label: "Configurações", icon: Settings,        module: "settings" },
 ];

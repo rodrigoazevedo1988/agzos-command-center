@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { db, sitesTable, clientsTable, activityTable } from "@workspace/db";
-import { eq, sql, ilike, and } from "drizzle-orm";
+import { eq, sql, ilike, and, inArray } from "drizzle-orm";
 import {
   CreateSiteBody,
   UpdateSiteBody,
@@ -41,7 +41,7 @@ router.get("/sites", async (req, res) => {
 
     const clientIds = [...new Set(sites.map((s) => s.clientId).filter(Boolean))] as number[];
     const clients = clientIds.length
-      ? await db.select().from(clientsTable).where(sql`id = ANY(ARRAY[${sql.join(clientIds.map(id => sql`${id}`), sql`, `)}]::int[])`)
+      ? await db.select().from(clientsTable).where(inArray(clientsTable.id, clientIds))
       : [];
     const clientMap = Object.fromEntries(clients.map((c) => [c.id, c.name]));
 

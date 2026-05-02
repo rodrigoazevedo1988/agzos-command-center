@@ -37,7 +37,8 @@ export type NavModule =
   | "tools"
   | "reports"
   | "settings"
-  | "calendar";
+  | "calendar"
+  | "activity";
 
 export type Action =
   | "sites.create"
@@ -76,6 +77,7 @@ export const DEFAULT_PERMISSIONS: PermissionMatrix = {
     reports: ["admin", "account_manager"],
     settings: ["admin"],
     calendar: ["admin", "account_manager", "traffic_manager", "designer", "developer", "financial", "client_viewer"],
+    activity: ["admin", "account_manager", "traffic_manager", "designer", "developer", "financial"],
   },
   actions: {
     "sites.create": ["admin", "account_manager", "developer"],

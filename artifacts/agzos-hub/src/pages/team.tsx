@@ -39,6 +39,7 @@ const MODULE_LABELS: Record<NavModule, string> = {
   reports: "Relatórios",
   settings: "Configurações",
   calendar: "Calendário",
+  activity: "Atividade",
 };
 
 const ACTION_LABELS: Record<Action, string> = {

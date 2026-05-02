@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { db, invoicesTable, clientsTable, projectsTable } from "@workspace/db";
-import { eq, sql, and, gte } from "drizzle-orm";
+import { eq, sql, and, gte, inArray } from "drizzle-orm";
 import {
   CreateInvoiceBody,
   UpdateInvoiceBody,
@@ -72,10 +72,10 @@ router.get("/financial/invoices", async (req, res) => {
     const projectIds = [...new Set(invoices.map((i) => i.projectId).filter(Boolean))] as number[];
 
     const clients = clientIds.length
-      ? await db.select().from(clientsTable).where(sql`id = ANY(${clientIds})`)
+      ? await db.select().from(clientsTable).where(inArray(clientsTable.id, clientIds))
       : [];
     const projects = projectIds.length
-      ? await db.select().from(projectsTable).where(sql`id = ANY(${projectIds})`)
+      ? await db.select().from(projectsTable).where(inArray(projectsTable.id, projectIds))
       : [];
 
     const clientMap = Object.fromEntries(clients.map((c) => [c.id, c.name]));
