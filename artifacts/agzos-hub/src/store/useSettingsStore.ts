@@ -97,7 +97,7 @@ const INITIAL_API_KEYS: ApiKey[] = [
     id: "stripe",
     service: "Stripe",
     label: "Secret Key",
-    key: "sk_live_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+    key: "sk_live_<sua_chave_aqui>",
     status: "connected",
     lastChecked: new Date(Date.now() - 1000 * 60 * 45).toISOString(),
     icon: "💳",

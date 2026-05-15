@@ -47,3 +47,8 @@ Thumbs.db
 # Replit
 .cache/
 .local/
+
+# Agzos Strategy — assets binários grandes (PDFs, fontes, imagens)
+# Manter localmente; não versionar no GitHub
+"Agzos Strategy/"
+Agzos\ Strategy/
