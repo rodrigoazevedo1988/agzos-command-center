@@ -9,103 +9,84 @@ import {
 } from "@/lib/permissions";
 
 export interface AuthUser {
-  id: string;
+  id: number;
   name: string;
   email: string;
   role: Role;
-  avatarInitials: string;
 }
 
-const MOCK_USERS: Record<Role, AuthUser> = {
-  admin: {
-    id: "1",
-    name: "Lucas Ferreira",
-    email: "lucas@agzos.agency",
-    role: "admin",
-    avatarInitials: "LF",
-  },
-  account_manager: {
-    id: "2",
-    name: "Ana Rodrigues",
-    email: "ana@agzos.agency",
-    role: "account_manager",
-    avatarInitials: "AR",
-  },
-  traffic_manager: {
-    id: "3",
-    name: "Pedro Santos",
-    email: "pedro@agzos.agency",
-    role: "traffic_manager",
-    avatarInitials: "PS",
-  },
-  designer: {
-    id: "4",
-    name: "Julia Lima",
-    email: "julia@agzos.agency",
-    role: "designer",
-    avatarInitials: "JL",
-  },
-  developer: {
-    id: "5",
-    name: "Carlos Dev",
-    email: "carlos@agzos.agency",
-    role: "developer",
-    avatarInitials: "CD",
-  },
-  financial: {
-    id: "6",
-    name: "Marina Costa",
-    email: "marina@agzos.agency",
-    role: "financial",
-    avatarInitials: "MC",
-  },
-  client_viewer: {
-    id: "7",
-    name: "Marcelo Oliveira",
-    email: "marcelo@mbo.com.br",
-    role: "client_viewer",
-    avatarInitials: "MO",
-  },
-};
-
 interface AuthStore {
-  user: AuthUser;
+  user: AuthUser | null;
+  token: string | null;
+  // Papel simulado localmente (apenas para admins testarem outros perfis)
+  simulatedRole: Role | null;
   permissions: PermissionMatrix;
-  switchRole: (role: Role) => void;
+
+  login: (token: string, user: AuthUser) => void;
+  logout: () => void;
+  simulateRole: (role: Role | null) => void;
   updatePermissions: (permissions: PermissionMatrix) => void;
   can: (action: Action) => boolean;
   canAccessModule: (module: NavModule) => boolean;
+  effectiveRole: () => Role | null;
 }
 
 export const useAuthStore = create<AuthStore>()(
   persist(
     (set, get) => ({
-      user: MOCK_USERS.admin,
+      user: null,
+      token: null,
+      simulatedRole: null,
       permissions: DEFAULT_PERMISSIONS,
 
-      switchRole: (role: Role) => {
-        set({ user: MOCK_USERS[role] });
+      login: (token, user) => {
+        set({ token, user, simulatedRole: null });
       },
 
-      updatePermissions: (permissions: PermissionMatrix) => {
+      logout: () => {
+        set({ token: null, user: null, simulatedRole: null });
+      },
+
+      simulateRole: (role) => {
+        // Só admins reais podem simular outros perfis
+        const { user } = get();
+        if (user?.role !== "admin") return;
+        set({ simulatedRole: role });
+      },
+
+      updatePermissions: (permissions) => {
         set({ permissions });
       },
 
-      can: (action: Action) => {
-        const { user, permissions } = get();
-        return permissions.actions[action]?.includes(user.role) ?? false;
+      effectiveRole: () => {
+        const { user, simulatedRole } = get();
+        if (!user) return null;
+        // Admin pode simular outro role localmente
+        return simulatedRole ?? user.role;
       },
 
-      canAccessModule: (module: NavModule) => {
-        const { user, permissions } = get();
-        return permissions.modules[module]?.includes(user.role) ?? false;
+      can: (action) => {
+        const { permissions, effectiveRole } = get();
+        const role = effectiveRole();
+        if (!role) return false;
+        return permissions.actions[action]?.includes(role) ?? false;
+      },
+
+      canAccessModule: (module) => {
+        const { permissions, effectiveRole } = get();
+        const role = effectiveRole();
+        if (!role) return false;
+        return permissions.modules[module]?.includes(role) ?? false;
       },
     }),
     {
       name: "agzos-auth",
-      partialize: (state) => ({ user: state.user, permissions: state.permissions }),
+      partialize: (state) => ({
+        user: state.user,
+        token: state.token,
+        permissions: state.permissions,
+        // Não persiste simulatedRole — sempre começa sem simulação
+      }),
     }
   )
 );
-
-export { MOCK_USERS };

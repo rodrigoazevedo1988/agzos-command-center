@@ -1,3 +1,12 @@
+import { config } from "dotenv";
+import { resolve } from "path";
+import { fileURLToPath } from "url";
+import path from "path";
+
+// Carrega o .env da raiz do workspace (dois níveis acima de artifacts/api-server)
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+config({ path: resolve(__dirname, "../../../../.env") });
+
 import app from "./app";
 import { logger } from "./lib/logger";
 

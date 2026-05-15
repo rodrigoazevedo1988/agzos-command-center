@@ -26,9 +26,9 @@ export function PermissionGuard({
   if (!hasPermission && hide) return null;
 
   if (!hasPermission) {
-    const disabledChild = React.cloneElement(children, {
+    const disabledChild = React.cloneElement(children as React.ReactElement<Record<string, unknown>>, {
       disabled: true,
-      className: `${children.props.className ?? ""} opacity-40 cursor-not-allowed pointer-events-none`,
+      className: `${(children.props as Record<string, unknown>)?.className ?? ""} opacity-40 cursor-not-allowed pointer-events-none`,
       onClick: undefined,
       "data-disabled": true,
     });

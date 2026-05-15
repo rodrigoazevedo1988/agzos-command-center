@@ -6,3 +6,4 @@ export * from "./tasks";
 export * from "./invoices";
 export * from "./tools";
 export * from "./activity";
+export * from "./users";

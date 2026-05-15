@@ -118,8 +118,8 @@ function TaskDetail({ task, onClose }: { task: Task; onClose: () => void }) {
   const overdue = isOverdue(task);
 
   function submitComment() {
-    if (!commentText.trim()) return;
-    addComment(task.id, commentText.trim(), user.id);
+    if (!commentText.trim() || !user) return;
+    addComment(task.id, commentText.trim(), String(user.id));
     setCommentText("");
   }
 
@@ -145,23 +145,19 @@ function TaskDetail({ task, onClose }: { task: Task; onClose: () => void }) {
     <Dialog open onOpenChange={onClose}>
       <DialogContent className="max-w-2xl bg-card border-border/50 p-0 gap-0 overflow-hidden max-h-[90vh]">
         <DialogHeader className="p-5 pb-3 border-b border-border/40">
-          <div className="flex items-start justify-between gap-3">
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2 mb-1.5 flex-wrap">
-                <Badge variant="outline" className={`text-[10px] uppercase tracking-wider border ${priorityColor(task.priority)}`}>
-                  {priorityLabel(task.priority)}
-                </Badge>
-                <Badge variant="outline" className="text-[10px] border-border/50 text-muted-foreground">
-                  {statusLabel(task.status)}
-                </Badge>
-                {overdue && (
-                  <Badge variant="outline" className="text-[10px] border-red-500/40 text-red-400 bg-red-500/10 gap-1">
-                    <AlertTriangle className="w-2.5 h-2.5" /> Atrasada
-                  </Badge>
-                )}
-              </div>
-              <DialogTitle className="text-lg font-semibold leading-snug">{task.title}</DialogTitle>
-            </div>
+          <DialogTitle className="text-lg font-semibold leading-snug">{task.title}</DialogTitle>
+          <div className="flex items-center gap-2 mt-1.5 flex-wrap">
+            <Badge variant="outline" className={`text-[10px] uppercase tracking-wider border ${priorityColor(task.priority)}`}>
+              {priorityLabel(task.priority)}
+            </Badge>
+            <Badge variant="outline" className="text-[10px] border-border/50 text-muted-foreground">
+              {statusLabel(task.status)}
+            </Badge>
+            {overdue && (
+              <Badge variant="outline" className="text-[10px] border-red-500/40 text-red-400 bg-red-500/10 gap-1">
+                <AlertTriangle className="w-2.5 h-2.5" /> Atrasada
+              </Badge>
+            )}
           </div>
         </DialogHeader>
 
@@ -311,7 +307,7 @@ function TaskDetail({ task, onClose }: { task: Task; onClose: () => void }) {
                 </div>
               ))}
               <div className="flex gap-2">
-                <Avatar initials={user.avatarInitials} />
+                <Avatar initials={user ? user.name.slice(0, 2).toUpperCase() : "??"} />
                 <div className="flex-1 flex gap-2">
                   <Input
                     placeholder="Adicionar comentário..."

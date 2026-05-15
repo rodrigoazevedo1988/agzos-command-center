@@ -322,7 +322,7 @@ function ChannelTable() {
                 <tr key={i} className="border-b border-border/20 hover:bg-accent/20 transition-colors">
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-2">
-                      <span className="text-base">{c.icon}</span>
+                      <span className="w-3 h-3 rounded-full shrink-0 inline-block" style={{ backgroundColor: c.color }} />
                       <span className="font-medium">{c.channel}</span>
                     </div>
                   </td>
@@ -351,7 +351,7 @@ function ChannelTable() {
 // ─── PDF export helper ────────────────────────────────────────────────────────
 
 async function generatePDF(
-  reportRef: React.RefObject<HTMLDivElement>,
+  reportRef: React.RefObject<HTMLDivElement | null>,
   kpis: ReturnType<typeof useReportsStore.getState>["kpis"],
   period: ReportPeriod,
   setPdfLoading: (v: boolean) => void
@@ -391,7 +391,7 @@ async function generatePDF(
     pdf.setFontSize(13);
     pdf.setTextColor(168, 85, 247);
     pdf.setFont("helvetica", "normal");
-    pdf.text("Agzos Hub — Sistema de Gestão de Agência", 16, 72);
+    pdf.text("Agzos Command Center — Sistema de Gestão de Agência", 16, 72);
 
     pdf.setFontSize(11);
     pdf.setTextColor(180, 180, 180);
@@ -430,13 +430,13 @@ async function generatePDF(
 
     pdf.setTextColor(120, 120, 120);
     pdf.setFontSize(8);
-    pdf.text("Este relatório foi gerado automaticamente pelo Agzos Hub.", 16, 152);
+    pdf.text("Este relatório foi gerado automaticamente pelo Agzos Command Center.", 16, 152);
     pdf.text("Todos os dados refletem o estado atual do sistema.", 16, 158);
 
     // Footer on cover
     pdf.setFontSize(7);
     pdf.setTextColor(80, 80, 80);
-    pdf.text(`Agzos Hub  •  agzos.agency  •  ${dateStr}`, W / 2, H - 8, { align: "center" });
+    pdf.text(`Agzos Command Center  •  agzos.agency  •  ${dateStr}`, W / 2, H - 8, { align: "center" });
 
     // ── Content pages (snapshot of DOM) ─────────────────────────
     if (reportRef.current) {
@@ -486,7 +486,7 @@ async function generatePDF(
         pdf.setPage(pg);
         pdf.setFontSize(7);
         pdf.setTextColor(80, 80, 80);
-        pdf.text(`Agzos Hub  •  ${dateStr}  •  Página ${pg} de ${totalPages}`, W / 2, H - 4, { align: "center" });
+        pdf.text(`Agzos Command Center  •  ${dateStr}  •  Página ${pg} de ${totalPages}`, W / 2, H - 4, { align: "center" });
       }
     }
 

@@ -74,7 +74,7 @@ const SOURCES = [
 // ── Add Client Dialog ─────────────────────────────────────────────────────────
 function AddClientDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
   const { addClient } = useClientsStore();
-  const { currentUser } = useAuthStore();
+  const { user: currentUser } = useAuthStore();
   const [form, setForm] = useState<NewClientInput>({
     name: "", companyName: "", email: "", phone: "",
     stage: "lead", monthlyValue: 0, industry: "",
@@ -171,7 +171,7 @@ function AddClientDialog({ open, onClose }: { open: boolean; onClose: () => void
 // ── Client Detail Dialog ──────────────────────────────────────────────────────
 function ClientDetailDialog({ client, onClose }: { client: Client; onClose: () => void }) {
   const { addNote, moveClient } = useClientsStore();
-  const { currentUser } = useAuthStore();
+  const { user: currentUser } = useAuthStore();
   const [note, setNote] = useState("");
   const [activeTab, setActiveTab] = useState<"overview" | "notes" | "activity">("overview");
 

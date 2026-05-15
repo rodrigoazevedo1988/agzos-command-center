@@ -136,7 +136,7 @@ function PushBanner() {
     const perm = await Notification.requestPermission();
     if (perm === "granted") {
       setPushEnabled(true);
-      new Notification("Agzos Hub", {
+      new Notification("Agzos Command Center", {
         body: "Notificações push ativadas com sucesso!",
         icon: "/favicon.ico",
       });

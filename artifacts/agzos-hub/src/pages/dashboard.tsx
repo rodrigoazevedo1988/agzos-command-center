@@ -10,8 +10,10 @@ import { Activity, DollarSign, Briefcase, Globe, Target, AlertTriangle } from "l
 
 export default function Dashboard() {
   const { data: kpis, isLoading: kpisLoading } = useGetDashboardKpis();
-  const { data: chartData, isLoading: chartLoading } = useGetRevenueChart({ months: 6 });
-  const { data: activity, isLoading: activityLoading } = useGetRecentActivity();
+  const { data: chartRaw, isLoading: chartLoading } = useGetRevenueChart({ months: 6 });
+  const chartData = Array.isArray(chartRaw) ? chartRaw : [];
+  const { data: activityData, isLoading: activityLoading } = useGetRecentActivity();
+  const activity = Array.isArray(activityData) ? activityData : [];
 
   return (
     <div className="flex flex-col gap-8 pb-8 animate-in fade-in slide-in-from-bottom-4 duration-500">

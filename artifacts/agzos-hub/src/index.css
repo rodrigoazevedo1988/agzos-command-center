@@ -1,4 +1,11 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+@font-face {
+  font-family: 'Figtree';
+  src: url('/fonts/figtree/Figtree-VariableFont_wght.ttf') format('truetype');
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
 @import "tailwindcss";
 @import "tw-animate-css";
 @plugin "@tailwindcss/typography";
@@ -65,6 +72,20 @@
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
+
+  /* Accordion animations */
+  --animate-accordion-down: accordion-down 0.2s ease-out;
+  --animate-accordion-up: accordion-up 0.2s ease-out;
+}
+
+@keyframes accordion-down {
+  from { height: 0; }
+  to { height: var(--radix-accordion-content-height); }
+}
+
+@keyframes accordion-up {
+  from { height: var(--radix-accordion-content-height); }
+  to { height: 0; }
 }
 
 :root {
@@ -75,58 +96,56 @@
   --elevate-1: rgba(255,255,255, .04);
   --elevate-2: rgba(255,255,255, .09);
 
-  /* Deep dark backgrounds */
-  --background: 0 0% 4%; /* #0A0A0A */
-  --foreground: 210 40% 98%; /* #F8FAFC */
-  
-  --card: 240 17% 8%; /* #111118 */
-  --card-foreground: 210 40% 98%;
-  --card-border: 240 17% 12%;
+  /* Agzos brand — deep black */
+  --background: 0 0% 5%;       /* #0E0E0E */
+  --foreground: 0 20% 99%;     /* #FFFDFD */
 
-  --popover: 240 17% 8%;
-  --popover-foreground: 210 40% 98%;
-  --popover-border: 240 17% 12%;
+  --card: 0 0% 8%;
+  --card-foreground: 0 20% 99%;
+  --card-border: 0 0% 12%;
 
-  /* Purple-violet primary (#A855F7) */
-  --primary: 271 91% 65%; 
+  --popover: 0 0% 8%;
+  --popover-foreground: 0 20% 99%;
+  --popover-border: 0 0% 12%;
+
+  /* Agzos brand red #D10A11 → hsl(358, 91%, 43%) */
+  --primary: 358 91% 43%;
   --primary-foreground: 0 0% 100%;
 
-  /* Subtle secondary */
-  --secondary: 240 17% 12%;
-  --secondary-foreground: 210 40% 98%;
+  --secondary: 0 0% 12%;
+  --secondary-foreground: 0 20% 99%;
 
-  --muted: 240 17% 12%;
-  --muted-foreground: 240 5% 65%;
+  --muted: 0 0% 12%;
+  --muted-foreground: 0 0% 60%;
 
-  --accent: 271 91% 65%;
+  --accent: 358 91% 43%;
   --accent-foreground: 0 0% 100%;
 
-  /* Destructive */
   --destructive: 0 84% 60%;
-  --destructive-foreground: 210 40% 98%;
+  --destructive-foreground: 0 20% 99%;
 
-  --border: 240 17% 15%;
-  --input: 240 17% 15%;
-  --ring: 271 91% 65%;
+  --border: 0 0% 15%;
+  --input: 0 0% 15%;
+  --ring: 358 91% 43%;
 
-  /* Charts */
-  --chart-1: 271 91% 65%; /* Purple */
-  --chart-2: 160 84% 39%; /* Green #10B981 */
-  --chart-3: 199 89% 48%; /* Blue */
-  --chart-4: 43 96% 56%; /* Yellow */
-  --chart-5: 0 84% 60%; /* Red */
+  /* Charts — red primary + semantic secondaries */
+  --chart-1: 358 91% 43%;  /* Agzos red */
+  --chart-2: 160 84% 39%;  /* Green */
+  --chart-3: 199 89% 48%;  /* Blue */
+  --chart-4: 43 96% 56%;   /* Yellow */
+  --chart-5: 0 84% 60%;    /* Light red */
 
-  /* Sidebar */
-  --sidebar: 240 17% 6%;
-  --sidebar-foreground: 210 40% 98%;
-  --sidebar-border: 240 17% 12%;
-  --sidebar-primary: 271 91% 65%;
+  /* Sidebar (kept for any remaining sidebar-token usage) */
+  --sidebar: 0 0% 6%;
+  --sidebar-foreground: 0 20% 99%;
+  --sidebar-border: 0 0% 12%;
+  --sidebar-primary: 358 91% 43%;
   --sidebar-primary-foreground: 0 0% 100%;
-  --sidebar-accent: 240 17% 12%;
-  --sidebar-accent-foreground: 210 40% 98%;
-  --sidebar-ring: 271 91% 65%;
+  --sidebar-accent: 0 0% 12%;
+  --sidebar-accent-foreground: 0 20% 99%;
+  --sidebar-ring: 358 91% 43%;
 
-  --app-font-sans: 'Inter', sans-serif;
+  --app-font-sans: 'Figtree', sans-serif;
   --app-font-serif: Georgia, serif;
   --app-font-mono: Menlo, monospace;
   --radius: 0.5rem;
@@ -153,7 +172,61 @@
 }
 
 .dark {
-  /* We use the same deep dark theme as default */
+  /* Same deep dark theme as :root */
+}
+
+.light {
+  color-scheme: light;
+  --background: 0 0% 98%;
+  --foreground: 0 0% 5%;
+
+  --card: 0 0% 100%;
+  --card-foreground: 0 0% 5%;
+  --card-border: 0 0% 90%;
+
+  --popover: 0 0% 100%;
+  --popover-foreground: 0 0% 5%;
+  --popover-border: 0 0% 90%;
+
+  /* Agzos red slightly deeper for light bg */
+  --primary: 358 91% 40%;
+  --primary-foreground: 0 0% 100%;
+
+  --secondary: 0 0% 94%;
+  --secondary-foreground: 0 0% 5%;
+
+  --muted: 0 0% 94%;
+  --muted-foreground: 0 0% 46%;
+
+  --accent: 358 91% 40%;
+  --accent-foreground: 0 0% 100%;
+
+  --destructive: 0 84% 60%;
+  --destructive-foreground: 0 0% 100%;
+
+  --border: 0 0% 88%;
+  --input: 0 0% 88%;
+  --ring: 358 91% 40%;
+
+  --chart-1: 358 91% 40%;
+  --chart-2: 160 84% 39%;
+  --chart-3: 199 89% 48%;
+  --chart-4: 43 96% 56%;
+  --chart-5: 0 84% 60%;
+
+  --sidebar: 0 0% 96%;
+  --sidebar-foreground: 0 0% 5%;
+  --sidebar-border: 0 0% 88%;
+  --sidebar-primary: 358 91% 40%;
+  --sidebar-primary-foreground: 0 0% 100%;
+  --sidebar-accent: 0 0% 90%;
+  --sidebar-accent-foreground: 0 0% 5%;
+  --sidebar-ring: 358 91% 40%;
+
+  --button-outline: rgba(0,0,0, .10);
+  --badge-outline: rgba(0,0,0, .05);
+  --elevate-1: rgba(0,0,0, .03);
+  --elevate-2: rgba(0,0,0, .06);
 }
 
 @layer base {

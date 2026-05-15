@@ -420,7 +420,7 @@ export default function SettingsPage() {
               <div className="flex items-center justify-between gap-4 py-2 border-b border-border/30">
                 <div>
                   <p className="text-sm font-medium">Usuário atual</p>
-                  <p className="text-xs text-muted-foreground">{user.email}</p>
+                  <p className="text-xs text-muted-foreground">{user?.email}</p>
                 </div>
                 <Badge variant="outline" className="text-xs">Administrador</Badge>
               </div>

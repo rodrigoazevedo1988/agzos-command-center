@@ -22,7 +22,7 @@ export const ROLE_COLORS: Record<Role, string> = {
   account_manager: "bg-blue-500/10 text-blue-400 border-blue-500/20",
   traffic_manager: "bg-orange-500/10 text-orange-400 border-orange-500/20",
   designer: "bg-pink-500/10 text-pink-400 border-pink-500/20",
-  developer: "bg-purple-500/10 text-purple-400 border-purple-500/20",
+  developer: "bg-primary/10 text-primary border-primary/20",
   financial: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20",
   client_viewer: "bg-muted text-muted-foreground border-border",
 };

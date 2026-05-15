@@ -184,7 +184,7 @@ const INITIAL_BRANDING: BrandingSettings = {
   agencyName: "Agzos Agency",
   tagline: "Performance & Growth",
   website: "https://agzos.agency",
-  primaryColor: "#A855F7",
+  primaryColor: "#D10A11",
   logoUrl: "",
   supportEmail: "suporte@agzos.agency",
   timezone: "America/Sao_Paulo",

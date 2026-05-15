@@ -1,8 +1,9 @@
-import express, { type Express } from "express";
+import express, { type Express, type Request, type Response, type NextFunction } from "express";
 import cors from "cors";
 import pinoHttp from "pino-http";
 import router from "./routes";
 import { logger } from "./lib/logger";
+import { requireAuth } from "./middleware/auth";
 
 const app: Express = express();
 
@@ -29,6 +30,17 @@ app.use(cors({ origin: "*", methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"]
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-app.use("/api", router);
+// Rotas públicas: /api/health, /api/auth/*
+app.use("/api/health", router);
+app.use("/api/auth", router);
+
+// Todas as demais rotas exigem JWT válido
+app.use("/api", (req: Request, res: Response, next: NextFunction) => {
+  // Deixa passar rotas de auth e health sem autenticação
+  if (req.path.startsWith("/auth/") || req.path === "/health") {
+    return next();
+  }
+  return requireAuth(req, res, next);
+}, router);
 
 export default app;

@@ -1,0 +1,20 @@
+{"sessionId":"538cf6","location":"App.tsx:ProtectedRoute","message":"token check","data":{"hasToken":true,"token":"eyJhbGciOiJIUzI1NiIs"},"timestamp":1778878163810,"hypothesisId":"A"}
+{"sessionId":"538cf6","location":"layout.tsx:AppLayout","message":"user check","data":{"hasUser":true,"userName":"Rodrigo Azevedo"},"timestamp":1778878163810,"hypothesisId":"B"}
+{"sessionId":"538cf6","location":"App.tsx:ProtectedRoute","message":"token check","data":{"hasToken":true,"token":"eyJhbGciOiJIUzI1NiIs"},"timestamp":1778878165945,"hypothesisId":"A"}
+{"sessionId":"538cf6","location":"layout.tsx:AppLayout","message":"user check","data":{"hasUser":true,"userName":"Rodrigo Azevedo"},"timestamp":1778878165945,"hypothesisId":"B"}
+{"sessionId":"538cf6","location":"App.tsx:ProtectedRoute","message":"token check","data":{"hasToken":true,"token":"eyJhbGciOiJIUzI1NiIs"},"timestamp":1778878172000,"hypothesisId":"A"}
+{"sessionId":"538cf6","location":"layout.tsx:AppLayout","message":"user check","data":{"hasUser":true,"userName":"Rodrigo Azevedo"},"timestamp":1778878172001,"hypothesisId":"B"}
+{"sessionId":"538cf6","location":"App.tsx:ProtectedRoute","message":"token check","data":{"hasToken":true,"token":"eyJhbGciOiJIUzI1NiIs"},"timestamp":1778878191953,"hypothesisId":"A"}
+{"sessionId":"538cf6","location":"layout.tsx:AppLayout","message":"user check","data":{"hasUser":true,"userName":"Rodrigo Azevedo"},"timestamp":1778878191953,"hypothesisId":"B"}
+{"sessionId":"538cf6","location":"App.tsx:ProtectedRoute","message":"token check","data":{"hasToken":true,"token":"eyJhbGciOiJIUzI1NiIs"},"timestamp":1778878194505,"hypothesisId":"A"}
+{"sessionId":"538cf6","location":"layout.tsx:AppLayout","message":"user check","data":{"hasUser":true,"userName":"Rodrigo Azevedo"},"timestamp":1778878194506,"hypothesisId":"B"}
+{"sessionId":"538cf6","location":"App.tsx:ProtectedRoute","message":"token check","data":{"hasToken":true,"token":"eyJhbGciOiJIUzI1NiIs"},"timestamp":1778878228843,"hypothesisId":"A"}
+{"sessionId":"538cf6","location":"layout.tsx:AppLayout","message":"user check","data":{"hasUser":true,"userName":"Rodrigo Azevedo"},"timestamp":1778878228845,"hypothesisId":"B"}
+{"sessionId":"538cf6","location":"App.tsx:ProtectedRoute","message":"token check","data":{"hasToken":true,"token":"eyJhbGciOiJIUzI1NiIs"},"timestamp":1778878246132,"hypothesisId":"A"}
+{"sessionId":"538cf6","location":"layout.tsx:AppLayout","message":"user check","data":{"hasUser":true,"userName":"Rodrigo Azevedo"},"timestamp":1778878246133,"hypothesisId":"B"}
+{"sessionId":"538cf6","location":"App.tsx:ProtectedRoute","message":"token check","data":{"hasToken":true,"token":"eyJhbGciOiJIUzI1NiIs"},"timestamp":1778878249668,"hypothesisId":"A"}
+{"sessionId":"538cf6","location":"layout.tsx:AppLayout","message":"user check","data":{"hasUser":true,"userName":"Rodrigo Azevedo"},"timestamp":1778878249669,"hypothesisId":"B"}
+{"sessionId":"538cf6","location":"App.tsx:ProtectedRoute","message":"token check","data":{"hasToken":true,"token":"eyJhbGciOiJIUzI1NiIs"},"timestamp":1778878259420,"hypothesisId":"A"}
+{"sessionId":"538cf6","location":"layout.tsx:AppLayout","message":"user check","data":{"hasUser":true,"userName":"Rodrigo Azevedo"},"timestamp":1778878259421,"hypothesisId":"B"}
+{"sessionId":"538cf6","location":"App.tsx:ProtectedRoute","message":"token check","data":{"hasToken":true,"token":"eyJhbGciOiJIUzI1NiIs"},"timestamp":1778878277238,"hypothesisId":"A"}
+{"sessionId":"538cf6","location":"layout.tsx:AppLayout","message":"user check","data":{"hasUser":true,"userName":"Rodrigo Azevedo"},"timestamp":1778878277239,"hypothesisId":"B"}
