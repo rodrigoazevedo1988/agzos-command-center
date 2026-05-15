@@ -1,76 +1,338 @@
+<div align="center">
+
+<img src="artifacts/agzos-hub/public/brand/logo-light.svg" alt="Agzos Command Center" height="60" />
+
 # Agzos Command Center
 
-## Overview
+**Sistema interno de gestão da Agzos Agency**
 
-Internal management system for Agzos Agency. A full-stack React + Express app for managing clients, sites, projects, team, financials, and tools.
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.9-3178C6?style=flat-square&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![React](https://img.shields.io/badge/React-19-61DAFB?style=flat-square&logo=react&logoColor=black)](https://react.dev/)
+[![Node.js](https://img.shields.io/badge/Node.js-24-5FA04E?style=flat-square&logo=nodedotjs&logoColor=white)](https://nodejs.org/)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-4169E1?style=flat-square&logo=postgresql&logoColor=white)](https://www.postgresql.org/)
+[![pnpm](https://img.shields.io/badge/pnpm-workspaces-F69220?style=flat-square&logo=pnpm&logoColor=white)](https://pnpm.io/)
+[![License](https://img.shields.io/badge/uso-privado-D10A11?style=flat-square)](#)
+
+</div>
+
+---
+
+## Índice
+
+- [Visão Geral](#visão-geral)
+- [Stack](#stack)
+- [Estrutura do Monorepo](#estrutura-do-monorepo)
+- [Módulos](#módulos)
+- [Setup](#setup)
+- [Comandos](#comandos)
+- [API Routes](#api-routes)
+- [Schema do Banco](#schema-do-banco)
+- [Design System](#design-system)
+- [Permissões (RBAC)](#permissões-rbac)
+
+---
+
+## Visão Geral
+
+O **Agzos Command Center** é o sistema interno da [Agzos Agency](https://agzos.agency) — uma plataforma full-stack para gestão de clientes, projetos, sites, equipe, financeiro e ferramentas da agência.
+
+```
+Frontend (React + Vite)  ──►  API (Express 5)  ──►  PostgreSQL
+        │                           │
+   Zustand stores            Drizzle ORM
+   shadcn/ui + Tailwind      Zod validation
+   Recharts + dnd-kit        JWT auth + RBAC
+```
+
+---
 
 ## Stack
 
-- **Monorepo tool**: pnpm workspaces
-- **Node.js version**: 24
-- **Package manager**: pnpm
-- **TypeScript version**: 5.9
-- **Frontend**: React + Vite (artifacts/agzos-hub), wouter routing, shadcn/ui, Tailwind CSS, Recharts
-- **API framework**: Express 5 (artifacts/api-server)
-- **Database**: PostgreSQL + Drizzle ORM
-- **Validation**: Zod (`zod/v4`), `drizzle-zod`
-- **API codegen**: Orval (from OpenAPI spec)
-- **Build**: esbuild (CJS bundle)
+### Frontend
+| Tecnologia | Versão | Uso |
+|---|---|---|
+| [React](https://react.dev) | 19 | UI framework |
+| [Vite](https://vitejs.dev) | 6 | Build tool |
+| [TypeScript](https://typescriptlang.org) | 5.9 | Tipagem estática |
+| [Tailwind CSS](https://tailwindcss.com) | 4 | Estilização |
+| [shadcn/ui](https://ui.shadcn.com) | new-york | Componentes |
+| [Wouter](https://github.com/molefrog/wouter) | 3 | Roteamento |
+| [Zustand](https://zustand-demo.pmnd.rs) | 5 | Estado global |
+| [Recharts](https://recharts.org) | 2 | Gráficos |
+| [dnd-kit](https://dndkit.com) | 6 | Drag & drop (Kanban) |
+| [TanStack Query](https://tanstack.com/query) | 5 | Data fetching |
 
-## Key Commands
+### Backend
+| Tecnologia | Versão | Uso |
+|---|---|---|
+| [Node.js](https://nodejs.org) | 24 | Runtime |
+| [Express](https://expressjs.com) | 5 | API framework |
+| [Drizzle ORM](https://orm.drizzle.team) | latest | ORM type-safe |
+| [PostgreSQL](https://postgresql.org) | 16 | Banco de dados |
+| [Zod](https://zod.dev) | v4 | Validação de schemas |
+| [bcryptjs](https://github.com/dcodeIO/bcrypt.js) | latest | Hash de senhas |
+| [jsonwebtoken](https://github.com/auth0/node-jsonwebtoken) | latest | JWT auth |
 
-- `pnpm run typecheck` — full typecheck across all packages
-- `pnpm run build` — typecheck + build all packages
-- `pnpm --filter @workspace/api-spec run codegen` — regenerate API hooks and Zod schemas from OpenAPI spec
-- `pnpm --filter @workspace/db run push` — push DB schema changes (dev only)
+### Tooling
+| Ferramenta | Uso |
+|---|---|
+| [pnpm workspaces](https://pnpm.io/workspaces) | Monorepo |
+| [Orval](https://orval.dev) | Codegen API client a partir do OpenAPI |
+| [esbuild](https://esbuild.github.io) | Build do servidor |
+| [tsx](https://github.com/privatenumber/tsx) | Execução de scripts TS |
 
-## Modules
+---
 
-1. **Dashboard** — KPIs, revenue chart, recent activity
-2. **Sites** — Manage all client sites (status, URL, platform, deployments)
-3. **Projects** — Track projects with priority, progress, assignees, due dates; Kanban (dnd-kit), List, Gantt, live timers, task detail dialog
-4. **Clients** — CRM funnel (Lead → Proposal → Contract → Active → Churned)
-5. **Team** — RBAC-ready team roster with roles (admin, account_manager, traffic_manager, designer, developer, financial, client)
-6. **Financial** — Invoice management, monthly summary, overdue tracking
-7. **Tools** — Agency tools registry with categories and cost tracking
-8. **Notifications** (`/notifications`) — Full notification history page with read/type filters, stats sidebar, settings; bell icon in topbar with dropdown (8 recent, mark read, clear); Web Push via browser Notification API; real-time simulation via setInterval (15s); Zustand store with `persist` (`agzos-notifications`)
+## Estrutura do Monorepo
 
-## Frontend State (Zustand Stores)
+```
+agzos-command-center/
+├── artifacts/
+│   ├── agzos-hub/          # Frontend React + Vite
+│   │   ├── src/
+│   │   │   ├── components/ # Layout, AppTopNav, BrandLogo, UI
+│   │   │   ├── pages/      # Dashboard, Projetos, Clientes...
+│   │   │   ├── store/      # Zustand stores
+│   │   │   └── lib/        # Permissões, brand, nav-groups
+│   │   └── public/
+│   │       └── brand/      # Logos SVG oficiais
+│   └── api-server/         # Express 5 API
+│       └── src/
+│           ├── routes/     # Endpoints REST
+│           ├── middleware/ # Auth JWT
+│           └── scripts/    # seed.ts, seed-admins.ts
+├── lib/
+│   ├── db/                 # Drizzle schema + migrations
+│   ├── api-spec/           # OpenAPI spec (orval codegen)
+│   ├── api-client-react/   # Hooks gerados (TanStack Query)
+│   └── api-zod/            # Schemas Zod gerados
+├── db/
+│   └── migrations/         # SQL migrations versionadas
+├── .env                    # Variáveis de ambiente (não commitado)
+└── pnpm-workspace.yaml
+```
 
-All stores are in `artifacts/agzos-hub/src/store/`:
-- `useAuthStore` — current user, RBAC permissions
-- `useSitesStore` — 7 mock sites, CRUD, filters
-- `useProjectsStore` — 5 projects, 12 tasks, team, kanban drag-and-drop, live timers
-- `useNotificationsStore` — notifications (type `AppNotification`), push toggle, realtime simulation, persisted to localStorage
+---
+
+## Módulos
+
+| Módulo | Rota | Descrição |
+|---|---|---|
+| 🏠 **Dashboard** | `/` | KPIs, gráfico de receita, atividade recente |
+| 🌐 **Sites** | `/sites` | Gestão de sites dos clientes (status, plataforma, deploys) |
+| 📋 **Projetos** | `/projects` | Kanban, lista, Gantt, timers, tarefas, prioridades |
+| 👥 **Clientes** | `/clients` | CRM: Lead → Proposta → Contrato → Ativo → Churned |
+| 👤 **Equipe** | `/team` | Roster com papéis e permissões |
+| 💰 **Financeiro** | `/financial` | Faturas, resumo mensal, controle de inadimplência |
+| 🔧 **Ferramentas** | `/tools` | Registro de ferramentas da agência com custos |
+| 📅 **Calendário** | `/calendar` | Visão de eventos e prazos |
+| 📊 **Relatórios** | `/reports` | Exportação de relatórios em PDF |
+| 🔔 **Notificações** | `/notifications` | Central de notificações com Web Push |
+| ⚙️ **Configurações** | `/settings` | Identidade, integrações, API keys |
+
+---
+
+## Setup
+
+### Pré-requisitos
+
+- Node.js 24+
+- pnpm 9+
+- PostgreSQL 16+ rodando localmente
+
+### 1. Clonar e instalar
+
+```bash
+git clone https://github.com/rodrigoazevedo1988/agzos-command-center.git
+cd agzos-command-center
+pnpm install
+```
+
+### 2. Configurar variáveis de ambiente
+
+```bash
+cp .env.example .env
+# Edite .env com suas credenciais
+```
+
+```env
+DATABASE_URL=postgresql://postgres:senha@localhost:5432/agzos
+JWT_SECRET=seu_secret_aqui
+JWT_EXPIRES_IN=7d
+PORT=8080
+```
+
+### 3. Criar o banco e rodar a migration
+
+```bash
+# Criar o banco
+createdb agzos
+
+# Rodar a migration completa
+psql $DATABASE_URL -f db/migrations/0001_initial_schema.sql
+
+# Ou via Drizzle (dev)
+pnpm --filter @workspace/db run push
+```
+
+### 4. Popular o banco (seed)
+
+```bash
+# Seed completo com dados realistas
+pnpm --filter @workspace/api-server tsx src/scripts/seed.ts
+
+# Apenas admins (produção)
+pnpm --filter @workspace/api-server tsx src/scripts/seed-admins.ts
+```
+
+### 5. Rodar em desenvolvimento
+
+```bash
+# Terminal 1 — API
+pnpm --filter @workspace/api-server run dev
+
+# Terminal 2 — Frontend
+pnpm --filter @workspace/agzos-hub run dev
+```
+
+Acesse: **http://localhost:5173**
+
+---
+
+## Comandos
+
+```bash
+# Typecheck completo (todos os pacotes)
+pnpm run typecheck
+
+# Build completo
+pnpm run build
+
+# Regenerar API client a partir do OpenAPI spec
+pnpm --filter @workspace/api-spec run codegen
+
+# Push de schema Drizzle (dev only)
+pnpm --filter @workspace/db run push
+```
+
+---
 
 ## API Routes
 
-All under `/api`:
-- `/dashboard/kpis`, `/dashboard/revenue-chart`, `/dashboard/recent-activity`
-- `/sites`, `/sites/:id`, `/sites/stats`
-- `/projects`, `/projects/:id`, `/projects/summary`
-- `/tasks`, `/tasks/:id`
-- `/clients`, `/clients/:id`, `/clients/funnel`
-- `/team`, `/team/:id`
-- `/financial/invoices`, `/financial/invoices/:id`, `/financial/summary`
-- `/tools`, `/tools/:id`
+Todas as rotas sob `/api`:
+
+```
+GET  /api/health
+
+# Auth
+POST /api/auth/login
+POST /api/auth/setup
+GET  /api/auth/me
+
+# Dashboard
+GET  /api/dashboard/kpis
+GET  /api/dashboard/revenue-chart
+GET  /api/dashboard/recent-activity
+
+# Sites
+GET    /api/sites
+POST   /api/sites
+GET    /api/sites/:id
+PUT    /api/sites/:id
+DELETE /api/sites/:id
+GET    /api/sites/stats
+
+# Projects & Tasks
+GET    /api/projects
+POST   /api/projects
+GET    /api/projects/:id
+PUT    /api/projects/:id
+DELETE /api/projects/:id
+GET    /api/tasks
+POST   /api/tasks
+PUT    /api/tasks/:id
+DELETE /api/tasks/:id
+
+# Clients
+GET    /api/clients
+POST   /api/clients
+GET    /api/clients/:id
+PUT    /api/clients/:id
+DELETE /api/clients/:id
+GET    /api/clients/funnel
+
+# Team
+GET    /api/team
+POST   /api/team
+GET    /api/team/:id
+PUT    /api/team/:id
+
+# Financial
+GET    /api/financial/invoices
+POST   /api/financial/invoices
+GET    /api/financial/invoices/:id
+PUT    /api/financial/invoices/:id
+GET    /api/financial/summary
+
+# Tools
+GET    /api/tools
+POST   /api/tools
+PUT    /api/tools/:id
+DELETE /api/tools/:id
+```
+
+---
+
+## Schema do Banco
+
+```
+users           — autenticação e papéis
+clients         — CRM com estágio e valor mensal
+team_members    — equipe com papéis
+sites           — sites gerenciados
+projects        — projetos com progresso e prioridade
+tasks           — tarefas vinculadas a projetos
+invoices        — faturas e controle financeiro
+tools           — ferramentas da agência
+activity        — log de atividades
+```
+
+Migration completa em [`db/migrations/0001_initial_schema.sql`](db/migrations/0001_initial_schema.sql).
+
+---
 
 ## Design System
 
-- Dark theme: near-black backgrounds (#0A0A0A, #111118)
-- Primary: Purple gradient (#6B46C1 → #A855F7)
-- Success/Performance: Green (#10B981)
-- Font: Inter (Google Fonts)
+| Token | Valor | Uso |
+|---|---|---|
+| `--primary` | `#D10A11` | Vermelho Agzos — CTAs, links ativos |
+| `--background` | `#0E0E0E` | Fundo dark |
+| `--foreground` | `#FFFDFD` | Texto principal |
+| `--font-sans` | Figtree | Tipografia principal (self-hosted) |
+| `--radius` | `0.5rem` | Border radius base |
 
-## DB Schema (lib/db/src/schema/)
+Componentes via **shadcn/ui** (estilo `new-york`) + **Tailwind CSS 4**.
 
-- `clients` — CRM clients with stage/value
-- `sites` — managed websites
-- `projects` — agency projects with progress/priority
-- `tasks` — project tasks
-- `team_members` — team with roles
-- `invoices` — billing/invoices
-- `tools` — agency tools registry
-- `activity` — activity feed log
+Header horizontal fixo com `backdrop-blur`, navegação em grupos dropdown, suporte a dark/light mode persistido.
 
-See the `pnpm-workspace` skill for workspace structure, TypeScript setup, and package details.
+---
+
+## Permissões (RBAC)
+
+| Papel | Acesso |
+|---|---|
+| `admin` | Acesso total |
+| `account_manager` | Clientes, projetos, relatórios, equipe |
+| `traffic_manager` | Projetos, ferramentas, calendário |
+| `designer` | Sites, projetos, ferramentas |
+| `developer` | Sites, projetos, ferramentas |
+| `financial` | Financeiro, clientes |
+| `client_viewer` | Dashboard, sites, projetos (leitura) |
+
+---
+
+<div align="center">
+
+Feito com ❤️ pela equipe **[Agzos Agency](https://agzos.agency)**
+
+</div>
